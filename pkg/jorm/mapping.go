@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"go/ast"
 	"strings"
+
+	"golang.org/x/exp/utf8string"
 )
 
 type MappingStatus int
@@ -26,7 +28,6 @@ type Mapping struct {
 	RepositoryPath string                // repository path from import xxx/xx/xx/repostoryxxx
 	Status         MappingStatus         // enumerate mapping status
 	FieldMap       map[string]*ast.Field // key is field name, value is field
-
 }
 
 func NewMapping() *Mapping {
@@ -34,9 +35,7 @@ func NewMapping() *Mapping {
 }
 
 func (m *Mapping) OnEntityReady() {
-	// only build once on entity ready
-	// currently doesn't build after once, eg Repository Ready will not build again
-	if m.Status == EntityReady {
+	if m.Status&EntityReady == EntityReady {
 		st := m.Entity
 		var selects []string = make([]string, 0, len(st.Fields.List))
 		for _, field := range st.Fields.List {
@@ -60,52 +59,96 @@ func (m *Mapping) OnEntityReady() {
 func (m *Mapping) BuildSqlText() {
 	if m.Status&RepositoryReady == RepositoryReady {
 		interfaceType := m.Repository
-		var criteria = make([]string, 0)
-
-	methodLoop:
 		for _, method := range interfaceType.Methods.List {
-			// split function name into column list
-			funcName := method.Names[0].Name
-			// todo findAutherByName
-			// todo findAllByName based on return type
-			_, after, ok := strings.Cut(funcName, "FindBy")
-			if !ok {
-				continue
+			methodName := method.Names[0].Name
+			if strings.HasPrefix(methodName, "Find") {
+				m.buildSelectSqlText(methodName, method)
+			} else if strings.HasPrefix(methodName, "Insert") {
+				m.buildInsertSqlText(methodName, method)
+			} else if strings.HasPrefix(methodName, "Update") {
+				m.buildUpdateSqlText(methodName, method)
+			} else if strings.HasPrefix(methodName, "Delete") {
+				m.buildDeleteSqlText(methodName, method)
 			}
-			names := strings.Split(after, "And")
-			for _, name := range names {
-				if len(names) == 1 && (name == "Id" || name == "ID") {
-					// TODO handle id particularly
-					continue methodLoop
-				}
-				if field, ok := m.FieldMap[name]; ok {
-					//TODO here should use the tag name
-					if n, ok := ExtractTagValue(field, "jorm-column"); ok {
-						criteria = append(criteria, n+" = ?")
-					} else {
-						criteria = append(criteria, name+" = ?")
-					}
-				} else {
-					continue methodLoop
-				}
-			}
-			// check1: the length should match
-			// the param type must match struct field type
-			e := method.Type.(*ast.FuncType)
-			for i, v := range e.Params.List {
-				fieldOfEntity := m.FieldMap[names[i]]
-				if v.Type.(*ast.Ident).Name == fieldOfEntity.Type.(*ast.Ident).Name {
-					fmt.Println("good ")
-				} else {
-					continue methodLoop
-				}
-			}
-			m.SqlText[funcName] = m.SelectClause + " " + m.TableName + " where " + strings.Join(criteria, " and ")
 		}
 		fmt.Println(interfaceType)
 	}
 }
 
-func (m *Mapping) buildSelectSqlText(methodName string, map1 map[string]*ast.Field) {
+func (m *Mapping) buildSelectSqlText(methodName string, method *ast.Field) {
+	var criteria = make([]string, 0)
+	// split function name into column list
+	funcName := method.Names[0].Name
+	// todo findAutherByName
+	// todo findAllByName based on return type
+	_, after, ok := strings.Cut(funcName, "FindBy")
+	if !ok {
+		return
+	}
+	names := strings.Split(after, "And")
+	for _, name := range names {
+		if len(names) == 1 && (name == "Id" || name == "ID") {
+			// TODO handle id particularly
+			return
+		}
+		if field, ok := m.FieldMap[name]; ok {
+			//TODO here should use the tag name
+			if n, ok := ExtractTagValue(field, "jorm-column"); ok {
+				criteria = append(criteria, n+" = ?")
+			} else {
+				criteria = append(criteria, name+" = ?")
+			}
+		} else {
+			return
+		}
+	}
+	// check1: the length should match
+	// the param type must match struct field type
+	e := method.Type.(*ast.FuncType)
+	for i, v := range e.Params.List {
+		fieldOfEntity := m.FieldMap[names[i]]
+		if v.Type.(*ast.Ident).Name == fieldOfEntity.Type.(*ast.Ident).Name {
+			fmt.Println("good ")
+		} else {
+			return
+		}
+	}
+	m.SqlText[funcName] = m.SelectClause + " " + m.TableName + " where " + strings.Join(criteria, " and ")
+}
 
+func (m *Mapping) buildInsertSqlText(methodName string, method *ast.Field) {
+
+}
+
+func (m *Mapping) buildUpdateSqlText(methodName string, method *ast.Field) {
+
+}
+
+func (m *Mapping) buildDeleteSqlText(methodName string, method *ast.Field) {
+
+}
+
+/**
+type Book struct {
+	Name         string
+	NameLessThan string
+}
+current impl is match BookLessThan such a field 1st, then NameLessThan = "some thing"
+*/
+func (m *Mapping) ExtractFieldNameAndOperand(section string) (*ast.Field, Operand) {
+	us := utf8string.NewString(section)
+	var runeCount = us.RuneCount()
+	// try match by less runes
+	for i := runeCount; i > 0; i-- {
+		field, ok := m.FieldMap[us.Slice(0, i)]
+		if ok {
+			if i == runeCount {
+				return field, EQ
+			}
+			var op Operand = Operand(us.Slice(i, runeCount))
+			return field, op
+		}
+	}
+	// find field name prior to
+	return nil, ""
 }

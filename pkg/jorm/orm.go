@@ -179,13 +179,14 @@ func (o *ORM) onStructType(subtype *ast.StructType, genDocList, tsDocList []*ast
 	o.MappingStore[key].OnEntityReady()
 }
 
-func serachImportPaths(x string, importPaths []*ast.ImportSpec) (pathValue string) {
+func serachImportPaths(x string, importPaths []*ast.ImportSpec) string {
 	for _, is := range importPaths {
-		pathValue = is.Path.Value[1 : len(is.Path.Value)-1]
+		runes := []rune(is.Path.Value)
+		sub := runes[1 : len(runes)-1]
 		if is.Name != nil && x == is.Name.Name {
-			return
-		} else if strings.HasSuffix(pathValue, x) {
-			return
+			return string(sub)
+		} else if strings.HasSuffix(is.Path.Value, x) {
+			return string(sub)
 		}
 	}
 	return ""
