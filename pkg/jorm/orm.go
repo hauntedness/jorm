@@ -14,6 +14,10 @@ type ORM struct {
 	MappingStore map[string]*Mapping
 }
 
+func NewORM() *ORM {
+	return &ORM{MappingStore: make(map[string]*Mapping)}
+}
+
 func (o *ORM) Parse(pkgs []*packages.Package) {
 	// find all repositories and entities
 	// one to one map
@@ -134,11 +138,11 @@ func (o *ORM) onInterfaceType(subtype *ast.InterfaceType, genDocList, tsDocList 
 	var idField = typeSpec.TypeParams.List[1]
 	fmt.Println(idField)
 	if _, ok := o.MappingStore[key]; !ok {
-		o.MappingStore[key] = &Mapping{SqlText: make(map[string]string)}
+		o.MappingStore[key] = NewMapping()
 	}
 	o.MappingStore[key].Repository = subtype
 	o.MappingStore[key].Status = o.MappingStore[key].Status | RepositoryReady
-	o.MappingStore[key].OnRepositoryReady()
+	o.MappingStore[key].BuildSqlText()
 }
 
 func (o *ORM) onStructType(subtype *ast.StructType, genDocList, tsDocList []*ast.Comment, typeSpec *ast.TypeSpec, file *ast.File, pkg *packages.Package) {
@@ -164,7 +168,7 @@ func (o *ORM) onStructType(subtype *ast.StructType, genDocList, tsDocList []*ast
 	}
 	key := pkg.PkgPath + "::" + typeSpec.Name.Name
 	if _, ok := o.MappingStore[key]; !ok {
-		o.MappingStore[key] = &Mapping{SqlText: make(map[string]string)}
+		o.MappingStore[key] = NewMapping()
 	}
 	if value, ok := extract(jormTable, "jorm-table"); ok {
 		o.MappingStore[key].TableName = value

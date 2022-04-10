@@ -29,7 +29,7 @@ func TestOrmMap(t *testing.T) {
 
 	// Print the names of the source files
 	// for each package listed on the command line.
-	var orm = &ORM{MappingStore: make(map[string]*Mapping)}
+	var orm = NewORM()
 	orm.iterate(pkgs)
 	for _, v := range orm.MappingStore {
 		fmt.Printf("%#v", v)
