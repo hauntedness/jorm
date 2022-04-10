@@ -17,7 +17,7 @@ func TestOrmMap(t *testing.T) {
 	// according to the conventions of the underlying build system.
 	cfg := &packages.Config{Mode: packages.NeedFiles | packages.NeedSyntax | packages.NeedName}
 	//pkgs, err := packages.Load(cfg, flag.Args()...)
-	pkgs, err := packages.Load(cfg, "github.com/hauntedness/testast/pkg/entity", "github.com/hauntedness/testast/pkg/repository")
+	pkgs, err := packages.Load(cfg, "github.com/hauntedness/jorm/pkg/entity", "github.com/hauntedness/jorm/pkg/repository")
 	//github.com/hauntedness/testast/pkg/entity
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "load: %v\n", err)
