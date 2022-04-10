@@ -22,7 +22,7 @@ type BookRepository[T entity.Book, K int] interface {
     //in progress
     func FindByCreatedDateLessThan(ptime time.Time) ([]T, error) 
         //in progress
-    func FindByCreatedDateBetweenAnd(start time.Time, end time.Time) ([]T, error) 
+    func FindByCreatedDateBetween(start time.Time, end time.Time) ([]T, error) 
     //in progress 
     // batch selection is not worth here
     func FindByNameIn(names []string) ([]T, error) 
