@@ -134,7 +134,7 @@ func (o *ORM) onInterfaceType(subtype *ast.InterfaceType, genDocList, tsDocList 
 	var idField = typeSpec.TypeParams.List[1]
 	fmt.Println(idField)
 	if _, ok := o.MappingStore[key]; !ok {
-		o.MappingStore[key] = &Mapping{WhereClauses: make(map[string]string)}
+		o.MappingStore[key] = &Mapping{SqlText: make(map[string]string)}
 	}
 	o.MappingStore[key].Repository = subtype
 	o.MappingStore[key].Status = o.MappingStore[key].Status | RepositoryReady
@@ -164,7 +164,7 @@ func (o *ORM) onStructType(subtype *ast.StructType, genDocList, tsDocList []*ast
 	}
 	key := pkg.PkgPath + "::" + typeSpec.Name.Name
 	if _, ok := o.MappingStore[key]; !ok {
-		o.MappingStore[key] = &Mapping{WhereClauses: make(map[string]string)}
+		o.MappingStore[key] = &Mapping{SqlText: make(map[string]string)}
 	}
 	if value, ok := extract(jormTable, "jorm-table"); ok {
 		o.MappingStore[key].TableName = value

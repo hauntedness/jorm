@@ -20,7 +20,7 @@ type Mapping struct {
 	Repository       *ast.InterfaceType // repository interface to be parsed
 	PrimaryKeys      map[string]any     // the type of pk, can be int, float64, strign and so on... todo how about struct(??)
 	SelectClause     string             // generated select clause
-	WhereClauses     map[string]string  // generated where clauses based on repository
+	SqlText          map[string]string  // generated where clauses based on repository
 	TableName        string             // table name
 	EntityPath       string             // entity path, from import xxxx/xxx/xxx/xxx
 	RepositoryPath   string             // repository path from import xxx/xx/xx/repostoryxxx
@@ -93,8 +93,27 @@ func (m *Mapping) OnRepositoryReady() {
 					continue methodLoop
 				}
 			}
-			m.WhereClauses[funcName] = "where " + strings.Join(criteria, " and ")
+			m.SqlText[funcName] = m.SelectClause + " " + m.TableName + " where " + strings.Join(criteria, " and ")
 		}
 		fmt.Println(interfaceType)
+	}
+}
+
+/**
+ * FindByCreatedDateBetween
+ * UpdateAuthorByName
+ */
+func (m *Mapping) MethodToWhere(methodName string) {
+	before, after, found := strings.Cut(methodName, "By")
+	if !found {
+		return
+	}
+	if strings.HasPrefix(before, "Find") {
+		fmt.Println("TODO")
+	}
+	splits := strings.Split(after, "And")
+	for _, sec := range splits {
+		fmt.Println(sec)
+
 	}
 }
