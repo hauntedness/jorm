@@ -12,7 +12,7 @@ type BookRepository[T entity.Book, K int] interface {
     // needed? this signature is not good for readness
     func FindByNameAndAuthor(name, author string) (T, error) 
     // in progress
-    func FindById(k int) (T,error)
+    func FindById(k k) (T,error)
     //in progress
     func FindAuthorByName(name string) (string , error)
     //in progress
