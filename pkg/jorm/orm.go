@@ -6,6 +6,7 @@ import (
 	"go/token"
 	"strings"
 
+	"golang.org/x/exp/utf8string"
 	"golang.org/x/tools/go/packages"
 )
 
@@ -181,12 +182,12 @@ func (o *ORM) onStructType(subtype *ast.StructType, genDocList, tsDocList []*ast
 
 func serachImportPaths(x string, importPaths []*ast.ImportSpec) string {
 	for _, is := range importPaths {
-		runes := []rune(is.Path.Value)
-		sub := runes[1 : len(runes)-1]
+		runes := utf8string.NewString(is.Path.Value)
+		trimed := runes.Slice(1, runes.RuneCount()-1)
 		if is.Name != nil && x == is.Name.Name {
-			return string(sub)
-		} else if strings.HasSuffix(is.Path.Value, x) {
-			return string(sub)
+			return trimed
+		} else if strings.HasSuffix(trimed, x) {
+			return trimed
 		}
 	}
 	return ""

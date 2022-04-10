@@ -135,7 +135,7 @@ type Book struct {
 }
 current impl is match BookLessThan such a field 1st, then NameLessThan = "some thing"
 */
-func (m *Mapping) ExtractFieldNameAndOperand(section string) (*ast.Field, Operand) {
+func (m *Mapping) extractFieldNameAndOperand(section string) (*ast.Field, Operand) {
 	us := utf8string.NewString(section)
 	var runeCount = us.RuneCount()
 	// try match by less runes
