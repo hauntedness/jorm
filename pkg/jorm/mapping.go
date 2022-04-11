@@ -1,6 +1,7 @@
 package jorm
 
 import (
+	"errors"
 	"fmt"
 	"go/ast"
 	"strings"
@@ -165,8 +166,7 @@ func (m *Mapping) ParseFieldNameAndOperand(section string) (field *ast.Field, op
 }
 
 /*
-*
- check1:
+ #check1:
  - if a slice is here, the pattern is something like: name in (?,?,?,?,?,?,?,?,?,?,?) so the sql is dynamic,
  - the count of ? should be the length of the slice (or say can be inferred from names string[])
  - so the code would be something like:
@@ -178,18 +178,27 @@ func (m *Mapping) ParseFieldNameAndOperand(section string) (field *ast.Field, op
  		...
  }
  rows, err := db.Query("SELECT name,author FROM book where id in ("+strings.Join(q, ",")+")", names)
-*
- check2:
+ #check2:
  - get the corresponding type in entity of the names[i]
  - get the param type or get underlying type if the param is slice
  - jorm require that the two types must match
-*
- check3:
- if the method name is like FindByNameIn or FindByNameNotIn
- the param type must be Slice
- and vice versa
+ #check3:
+ - if the method name is like FindByNameIn or FindByNameNotIn, the param type must be Slice
+ - and vice versa
 */
+//TODO
 func (m *Mapping) TodoBuildSegment(columnName string, columnType ast.Expr, paramName string, paramType ast.Expr, op Operand) (string, error) {
-	//if
-	return "TODO", nil
+	switch op {
+	case OP_IN, OP_NOTIN:
+		if ptype, ok := paramType.(*ast.ArrayType); ok && ptype.Elt.(*ast.Ident).Name == columnType.(*ast.Ident).Name {
+			fmt.Println("good")
+			// then here to compose code segment
+		}
+	default:
+		if paramType.(*ast.Ident).Name == columnType.(*ast.Ident).Name {
+			fmt.Println("good")
+			// then here to compose code segment
+		}
+	}
+	return "", errors.New("type of " + paramName + " doesn't match entity filed type:")
 }
