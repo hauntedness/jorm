@@ -60,22 +60,21 @@ func (m *Mapping) BuildSqlText() {
 		interfaceType := m.Repository
 		for _, method := range interfaceType.Methods.List {
 			methodName := method.Names[0].Name
-
 			if strings.HasPrefix(methodName, "Find") {
-				m.buildSelectSqlText(method)
+				m.buildSelectCodeText(method)
 			} else if strings.HasPrefix(methodName, "Insert") {
-				m.buildInsertSqlText(method)
+				m.buildInsertCodeText(method)
 			} else if strings.HasPrefix(methodName, "Update") {
-				m.buildUpdateSqlText(method)
+				m.buildUpdateCodeText(method)
 			} else if strings.HasPrefix(methodName, "Delete") {
-				m.buildDeleteSqlText(method)
+				m.buildDeleteCodeText(method)
 			}
 		}
 		fmt.Println(interfaceType)
 	}
 }
 
-func (m *Mapping) buildSelectSqlText(method *ast.Field) {
+func (m *Mapping) buildSelectCodeText(method *ast.Field) {
 	var criteria = make([]string, 0)
 	// split function name into column list
 	funcName := method.Names[0].Name
@@ -89,22 +88,15 @@ func (m *Mapping) buildSelectSqlText(method *ast.Field) {
 
 	names := strings.Split(after, "And")
 	for i, name := range names {
-		// check1:
-		// if a slice is here, the pattern is something like: name in (?,?,?,?,?,?,?,?,?,?,?)
-		// so the sql is dynamic, the count of ? should be the length of the slice (or say can be inferred from names string[])
-		// so the code would be something like:
-		// func (b *bookRepository) FindByNameIn(names []string) (books []entity.Book, err error){
-		// 		var q = make([]string, 0, len(names))
-		// 		for range names {
-		//	 		q = append(q, "?")
-		// 		}
-		// 		...
-		// }
-		// rows, err := db.Query("SELECT id,name,author,version FROM book where id in ("+strings.Join(q, ",")+")", names)
-		// check2:
-		// get the corresponding type in entity of the names[i]
-		// get the param type or get underlying type if the param is slice
-		// jorm require that the two types must match
+
+		field, op := m.ParseFieldNameAndOperand(name)
+		if field == nil {
+			return
+		}
+		if ar, ok := params[i].Type.(*ast.ArrayType); !ok && (op == OP_IN || op == OP_NOTIN) {
+			fmt.Println(ar.Elt.(*ast.Ident).Name)
+			return
+		}
 		switch paramType := params[i].Type.(type) {
 		case *ast.Ident:
 			fmt.Println(paramType.Name)
@@ -134,15 +126,15 @@ func (m *Mapping) buildSelectSqlText(method *ast.Field) {
 	m.CodeText[funcName] = m.SelectClause + " " + m.TableName + " where " + strings.Join(criteria, " and ")
 }
 
-func (m *Mapping) buildInsertSqlText(method *ast.Field) {
+func (m *Mapping) buildInsertCodeText(method *ast.Field) {
 
 }
 
-func (m *Mapping) buildUpdateSqlText(method *ast.Field) {
+func (m *Mapping) buildUpdateCodeText(method *ast.Field) {
 
 }
 
-func (m *Mapping) buildDeleteSqlText(method *ast.Field) {
+func (m *Mapping) buildDeleteCodeText(method *ast.Field) {
 
 }
 
@@ -162,7 +154,7 @@ func (m *Mapping) ParseFieldNameAndOperand(section string) (field *ast.Field, op
 		field, ok = m.FieldMap[utf8str.Slice(0, i)]
 		if ok {
 			if i == runeCount {
-				return field, EQ
+				return field, OP_EQ
 			}
 			op = NewOperand(utf8str.Slice(i, runeCount))
 			return field, op
@@ -170,4 +162,34 @@ func (m *Mapping) ParseFieldNameAndOperand(section string) (field *ast.Field, op
 	}
 	// find field name prior to
 	return nil, NewOperand("")
+}
+
+/*
+*
+ check1:
+ - if a slice is here, the pattern is something like: name in (?,?,?,?,?,?,?,?,?,?,?) so the sql is dynamic,
+ - the count of ? should be the length of the slice (or say can be inferred from names string[])
+ - so the code would be something like:
+ func (b *bookRepository) FindByNameIn(names []string) (books []entity.Book, err error){
+ 		var q = make([]string, 0, len(names))
+ 		for range names {
+	 		q = append(q, "?")
+ 		}
+ 		...
+ }
+ rows, err := db.Query("SELECT name,author FROM book where id in ("+strings.Join(q, ",")+")", names)
+*
+ check2:
+ - get the corresponding type in entity of the names[i]
+ - get the param type or get underlying type if the param is slice
+ - jorm require that the two types must match
+*
+ check3:
+ if the method name is like FindByNameIn or FindByNameNotIn
+ the param type must be Slice
+ and vice versa
+*/
+func (m *Mapping) TodoBuildSegment(columnName string, columnType ast.Expr, paramName string, paramType ast.Expr, op Operand) (string, error) {
+	//if
+	return "TODO", nil
 }

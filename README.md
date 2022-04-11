@@ -6,13 +6,13 @@ an orm library for go, based on go generate, zero document needed, inspired by j
 
 - below functions list what is going to be implented or not
 ```go
-type BookRepository[T entity.Book, K int] interface {
+type BookRepository[T entity.Book] interface {
     //done
     FindByNameAndAuthor(name string, author string) (T, error)
     //needed? this signature is not good for readness
     FindByNameAndAuthor(name, author string) (T, error) 
     //in progress
-    FindById(k K) (T,error)
+    FindById(k int) (T,error)
     //in progress
     FindAuthorByName(name string) (string , error)
     //in progress

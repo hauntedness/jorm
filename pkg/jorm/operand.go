@@ -7,14 +7,14 @@ type Operand interface {
 type operand string
 
 var (
-	EQ    Operand = operand("Eq")    // A == B
-	LT    Operand = operand("Lt")    // A < B
-	GT    Operand = operand("Gt")    // A > B
-	IN    Operand = operand("In")    // A in (strings.join([B,C,D],","))
-	NOTEQ Operand = operand("NotEq") // A != B
-	LE    Operand = operand("Le")    // A <= B
-	GE    Operand = operand("Ge")    // A >= B
-	NOTIN Operand = operand("NotIn") // A not in B
+	OP_EQ    Operand = operand("Eq")    // A == B
+	OP_LT    Operand = operand("Lt")    // A < B
+	OP_GT    Operand = operand("Gt")    // A > B
+	OP_IN    Operand = operand("In")    // A in (strings.join([B,C,D],","))
+	OP_NOTEQ Operand = operand("NotEq") // A != B
+	OP_LE    Operand = operand("Le")    // A <= B
+	OP_GE    Operand = operand("Ge")    // A >= B
+	OP_NOTIN Operand = operand("NotIn") // A not in B
 )
 
 func NewOperand(str string) Operand {
@@ -23,22 +23,22 @@ func NewOperand(str string) Operand {
 
 func (op operand) BuildOper(column string) string {
 	switch op {
-	case EQ:
-		return " = ?"
-	case LT:
-		return " < ?"
-	case GT:
-		return " > ?"
-	case IN:
-		return " in (" //todo mark as
-	case NOTEQ:
-		return " <> ?"
-	case LE:
-		return " <= ?"
-	case GE:
-		return " >= ?"
-	case NOTIN:
-		return "not in (" //todo mark as
+	case OP_EQ:
+		return column + " = ?"
+	case OP_LT:
+		return column + " < ?"
+	case OP_GT:
+		return column + " > ?"
+	case OP_IN:
+		return column + " in (" //todo mark as
+	case OP_NOTEQ:
+		return column + " <> ?"
+	case OP_LE:
+		return column + " <= ?"
+	case OP_GE:
+		return column + " >= ?"
+	case OP_NOTIN:
+		return column + "not in (" //todo mark as
 	default:
 		return ""
 	}
