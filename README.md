@@ -7,44 +7,39 @@ an orm library for go, based on go generate, zero document needed, inspired by j
 - below functions list what is going to be implented or not
 ```go
 type BookRepository[T entity.Book, K int] interface {
-    // done
-    func FindByNameAndAuthor(name string, author string) (T, error)
-    // needed? this signature is not good for readness
-    func FindByNameAndAuthor(name, author string) (T, error) 
-    // in progress
-    func FindById(k K) (T,error)
+    //done
+    FindByNameAndAuthor(name string, author string) (T, error)
+    //needed? this signature is not good for readness
+    FindByNameAndAuthor(name, author string) (T, error) 
     //in progress
-    func FindAuthorByName(name string) (string , error)
+    FindById(k K) (T,error)
     //in progress
-    func FindAllByName(name string) ([]T , error)
+    FindAuthorByName(name string) (string , error)
     //in progress
-    func FindAllAuthorByName(name string) ([]string, error)
+    FindByName(name string) ([]T , error)
     //in progress
-    func FindByCreatedDateLessThan(ptime time.Time) ([]T, error) 
-        //in progress
-    func FindByCreatedDateBetween(start time.Time, end time.Time) ([]T, error) 
+    FindAuthorByName(name string) ([]string, error)
+    //in progress where created_date < ptime
+    FindByCreatedDateLt(ptime time.Time) ([]T, error) 
+    //in progress 
+    //batch selection is not worth here
+    FindByNameIn(names []string) ([]T, error) 
     //in progress 
     // batch selection is not worth here
-    func FindByNameIn(names []string) ([]T, error) 
-    //in progress 
-    // batch selection is not worth here
-    func FindByNameNotIn(names []string) ([]T, error)
+    FindByNameNotIn(names []string) ([]T, error)
     //in progress will not provide auto generated id
-    func Insert(book T) error
-      //in progress will not provide auto generated id
-    func InsertAll(books []T) (int, error)
-    // in progress
-    // same to update by id?
-    func Update(book T) error
-        // in progress
-    func UpdateAll(books []T) (int, error)
-    // to keep the similar order to update author = ? where name = ?
-    // needn't to return the number of updated rows?
-    // in progress
-    func UpdateAuthorByName(author string, name string) (int, error)
-    // in progress
-    // very risky operation, all column same as each other only except id?
-    // func UpdateByName(book T, name string) error
+    Insert(book T) error
+    //in progress will not provide auto generated id
+    InsertAll(books []T) (int, error)
+    //in progress
+    //same to update by id?
+    Update(book T) error
+    //in progress
+    UpdateAll(books []T) (int, error)
+    //to keep the similar order to update author = ? where name = ?
+    //needn't to return the number of updated rows?
+    //in progress
+    UpdateAuthorByName(author string, name string) (int, error)
 }
 ```
 ### Remove type parameter for support other go version?

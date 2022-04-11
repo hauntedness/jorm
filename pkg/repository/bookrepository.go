@@ -1,12 +1,16 @@
 package repository
 
-import "github.com/hauntedness/jorm/pkg/entity"
+import (
+	"strings"
+
+	"github.com/hauntedness/jorm/pkg/entity"
+)
 
 //jorm-repository:"true"
 type BookRepository[T entity.Book, K int] interface {
 	FindById(k K) (book T, err error)
 	FindByNameAndAuthor(name string, author string) (book T, err error)
-	FindAllByName(name string) (books []T, err error)
+	FindByNameIn(name []string) (books []T, err error)
 }
 
 type bookRepository struct {
@@ -24,4 +28,18 @@ func (b *bookRepository) FindByNameAndAuthor(name string, author string) (book e
 	return
 }
 
-var _ Repository[entity.Book, int] = &bookRepository{}
+func (b *bookRepository) FindByNameIn(names []string) (books []entity.Book, err error) {
+	var q = make([]string, 0, len(names))
+	for range names {
+		q = append(q, "?")
+	}
+	rows, err := db.Query("SELECT id,name,author,version FROM book where id in ("+strings.Join(q, ",")+")", names)
+	for rows.Next() {
+		var book entity.Book
+		rows.Scan(&book.Id, &book.Name, &book.Author, &book.Version)
+		books = append(books, book)
+	}
+	return
+}
+
+var _ BookRepository[entity.Book, int] = &bookRepository{}

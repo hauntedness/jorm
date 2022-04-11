@@ -22,7 +22,7 @@ type Mapping struct {
 	Repository     *ast.InterfaceType    // repository interface to be parsed
 	PrimaryKeys    map[string]any        // the type of pk, can be int, float64, strign and so on... todo how about struct(??)
 	SelectClause   string                // generated select clause
-	SqlText        map[string]string     // generated where clauses based on repository
+	CodeText       map[string]string     // generated where clauses based on repository
 	TableName      string                // table name
 	EntityPath     string                // entity path, from import xxxx/xxx/xxx/xxx
 	RepositoryPath string                // repository path from import xxx/xx/xx/repostoryxxx
@@ -31,7 +31,7 @@ type Mapping struct {
 }
 
 func NewMapping() *Mapping {
-	return &Mapping{SqlText: make(map[string]string), FieldMap: make(map[string]*ast.Field)}
+	return &Mapping{CodeText: make(map[string]string), FieldMap: make(map[string]*ast.Field)}
 }
 
 func (m *Mapping) OnEntityReady() {
@@ -61,34 +61,64 @@ func (m *Mapping) BuildSqlText() {
 		interfaceType := m.Repository
 		for _, method := range interfaceType.Methods.List {
 			methodName := method.Names[0].Name
+
 			if strings.HasPrefix(methodName, "Find") {
-				m.buildSelectSqlText(methodName, method)
+				m.buildSelectSqlText(method)
 			} else if strings.HasPrefix(methodName, "Insert") {
-				m.buildInsertSqlText(methodName, method)
+				m.buildInsertSqlText(method)
 			} else if strings.HasPrefix(methodName, "Update") {
-				m.buildUpdateSqlText(methodName, method)
+				m.buildUpdateSqlText(method)
 			} else if strings.HasPrefix(methodName, "Delete") {
-				m.buildDeleteSqlText(methodName, method)
+				m.buildDeleteSqlText(method)
 			}
 		}
 		fmt.Println(interfaceType)
 	}
 }
 
-func (m *Mapping) buildSelectSqlText(methodName string, method *ast.Field) {
+func (m *Mapping) buildSelectSqlText(method *ast.Field) {
 	var criteria = make([]string, 0)
 	// split function name into column list
 	funcName := method.Names[0].Name
+	params := method.Type.(*ast.FuncType).Params.List
 	// todo findAutherByName
 	// todo findAllByName based on return type
 	_, after, ok := strings.Cut(funcName, "FindBy")
 	if !ok {
 		return
 	}
+	// check1: the length should match
+	// the param type must match struct field type
+	// if a slice is here, the pattern is something like: name in (?,?,?,?,?,?,?,?,?,?,?)
+	// so the sql is dynamic, the count of ? should be the length of the slice (or say can be inferred from names string[])
+	// so the code would be something like:
+	// func (b *bookRepository) FindByNameIn(names []string) (books []entity.Book, err error){
+	// 		var q = make([]string, 0, len(names))
+	// 		for range names {
+	//	 		q = append(q, "?")
+	// 		}
+	// 		...
+	// }
+	// rows, err := db.Query("SELECT id,name,author,version FROM book where id in ("+strings.Join(q, ",")+")", names)
 	names := strings.Split(after, "And")
-	for _, name := range names {
+	for i, name := range names {
 		if len(names) == 1 && (name == "Id" || name == "ID") {
 			// TODO handle id particularly
+			return
+		}
+		switch paramType := params[i].Type.(type) {
+		case *ast.Ident:
+			fmt.Println(paramType.Name)
+		case *ast.ArrayType:
+			name := params[i].Names[0].Name
+			var i = paramType.Elt.(*ast.Ident).Name
+			fmt.Println(name)
+			fmt.Println(i)
+		default:
+			return
+		}
+		// check for type match
+		if m.FieldMap[name].Type.(*ast.Ident).Name != params[i].Type.(*ast.Ident).Name {
 			return
 		}
 		if field, op := m.ParseFieldNameAndOperand(name); field != nil {
@@ -101,29 +131,19 @@ func (m *Mapping) buildSelectSqlText(methodName string, method *ast.Field) {
 			return
 		}
 	}
-	// check1: the length should match
-	// the param type must match struct field type
-	e := method.Type.(*ast.FuncType)
-	for i, v := range e.Params.List {
-		fieldOfEntity := m.FieldMap[names[i]]
-		if v.Type.(*ast.Ident).Name == fieldOfEntity.Type.(*ast.Ident).Name {
-			fmt.Println("good ")
-		} else {
-			return
-		}
-	}
-	m.SqlText[funcName] = m.SelectClause + " " + m.TableName + " where " + strings.Join(criteria, " and ")
+
+	m.CodeText[funcName] = m.SelectClause + " " + m.TableName + " where " + strings.Join(criteria, " and ")
 }
 
-func (m *Mapping) buildInsertSqlText(methodName string, method *ast.Field) {
+func (m *Mapping) buildInsertSqlText(method *ast.Field) {
 
 }
 
-func (m *Mapping) buildUpdateSqlText(methodName string, method *ast.Field) {
+func (m *Mapping) buildUpdateSqlText(method *ast.Field) {
 
 }
 
-func (m *Mapping) buildDeleteSqlText(methodName string, method *ast.Field) {
+func (m *Mapping) buildDeleteSqlText(method *ast.Field) {
 
 }
 

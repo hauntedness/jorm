@@ -7,15 +7,14 @@ type Operand interface {
 type operand string
 
 var (
-	EQ    Operand = operand("Eq")      // A == B
-	LT    Operand = operand("Lt")      // A < B
-	GT    Operand = operand("Gt")      // A > B
-	IN    Operand = operand("In")      // A in (strings.join([B,C,D],","))
-	BT    Operand = operand("Between") // A between B and C
-	NOTEQ Operand = operand("NotEq")   // A != B
-	LE    Operand = operand("Le")      // A <= B
-	GE    Operand = operand("Ge")      // A >= B
-	NOTIN Operand = operand("NotIn")   // A not in B
+	EQ    Operand = operand("Eq")    // A == B
+	LT    Operand = operand("Lt")    // A < B
+	GT    Operand = operand("Gt")    // A > B
+	IN    Operand = operand("In")    // A in (strings.join([B,C,D],","))
+	NOTEQ Operand = operand("NotEq") // A != B
+	LE    Operand = operand("Le")    // A <= B
+	GE    Operand = operand("Ge")    // A >= B
+	NOTIN Operand = operand("NotIn") // A not in B
 )
 
 func NewOperand(str string) Operand {
@@ -32,8 +31,6 @@ func (op operand) BuildOper(column string) string {
 		return " > ?"
 	case IN:
 		return " in (" //todo mark as
-	case BT:
-		return " between ? and ?"
 	case NOTEQ:
 		return " <> ?"
 	case LE:
