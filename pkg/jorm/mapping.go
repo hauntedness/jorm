@@ -145,10 +145,10 @@ func (m *Mapping) ParseFieldNameAndOperand(section string) (field *ast.Field, op
 			if i == runeCount {
 				return field, EQ
 			}
-			op = ConvertToOperand(utf8str.Slice(i, runeCount))
+			op = NewOperand(utf8str.Slice(i, runeCount))
 			return field, op
 		}
 	}
 	// find field name prior to
-	return nil, ConvertToOperand("")
+	return nil, NewOperand("")
 }

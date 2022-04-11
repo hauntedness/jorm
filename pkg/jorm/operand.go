@@ -18,7 +18,7 @@ var (
 	NOTIN Operand = operand("NotIn")   // A not in B
 )
 
-func ConvertToOperand(str string) Operand {
+func NewOperand(str string) Operand {
 	return operand(str)
 }
 
