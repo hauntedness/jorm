@@ -91,12 +91,11 @@ func (m *Mapping) buildSelectSqlText(methodName string, method *ast.Field) {
 			// TODO handle id particularly
 			return
 		}
-		if field, ok := m.FieldMap[name]; ok {
-			//TODO here should use the tag name
+		if field, op := m.ParseFieldNameAndOperand(name); field != nil {
 			if n, ok := ExtractTagValue(field, "jorm-column"); ok {
-				criteria = append(criteria, n+" = ?")
+				criteria = append(criteria, op.BuildOper(n))
 			} else {
-				criteria = append(criteria, name+" = ?")
+				criteria = append(criteria, op.BuildOper(n))
 			}
 		} else {
 			return
@@ -135,20 +134,21 @@ type Book struct {
 }
 current impl is match BookLessThan such a field 1st, then NameLessThan = "some thing"
 */
-func (m *Mapping) extractFieldNameAndOperand(section string) (*ast.Field, Operand) {
-	us := utf8string.NewString(section)
-	var runeCount = us.RuneCount()
+func (m *Mapping) ParseFieldNameAndOperand(section string) (field *ast.Field, op Operand) {
+	utf8str := utf8string.NewString(section)
+	var runeCount = utf8str.RuneCount()
 	// try match by less runes
 	for i := runeCount; i > 0; i-- {
-		field, ok := m.FieldMap[us.Slice(0, i)]
+		var ok bool
+		field, ok = m.FieldMap[utf8str.Slice(0, i)]
 		if ok {
 			if i == runeCount {
 				return field, EQ
 			}
-			var op Operand = Operand(us.Slice(i, runeCount))
+			op = ConvertToOperand(utf8str.Slice(i, runeCount))
 			return field, op
 		}
 	}
 	// find field name prior to
-	return nil, ""
+	return nil, ConvertToOperand("")
 }

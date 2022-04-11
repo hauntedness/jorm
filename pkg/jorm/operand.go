@@ -1,13 +1,48 @@
 package jorm
 
-type Operand string
+type Operand interface {
+	BuildOper(string) string
+}
 
-// TODO, maybe it is too long for method name, consider shorter abbr
-const (
-	EQ  Operand = "Equals"      // A == B
-	LT  Operand = "LessThan"    // A < B
-	GT  Operand = "GreaterThan" // A > B
-	IN  Operand = "In"          // A in (strings.join([B,C,D],","))
-	NOT Operand = "Not"         // A != B
-	BT  Operand = "Between"     // A between B and C
+type operand string
+
+var (
+	EQ    Operand = operand("Eq")      // A == B
+	LT    Operand = operand("Lt")      // A < B
+	GT    Operand = operand("Gt")      // A > B
+	IN    Operand = operand("In")      // A in (strings.join([B,C,D],","))
+	BT    Operand = operand("Between") // A between B and C
+	NOTEQ Operand = operand("NotEq")   // A != B
+	LE    Operand = operand("Le")      // A <= B
+	GE    Operand = operand("Ge")      // A >= B
+	NOTIN Operand = operand("NotIn")   // A not in B
 )
+
+func ConvertToOperand(str string) Operand {
+	return operand(str)
+}
+
+func (op operand) BuildOper(column string) string {
+	switch op {
+	case EQ:
+		return " = ?"
+	case LT:
+		return " < ?"
+	case GT:
+		return " > ?"
+	case IN:
+		return " in (" //todo mark as
+	case BT:
+		return " between ? and ?"
+	case NOTEQ:
+		return " <> ?"
+	case LE:
+		return " <= ?"
+	case GE:
+		return " >= ?"
+	case NOTIN:
+		return "not in (" //todo mark as
+	default:
+		return ""
+	}
+}
