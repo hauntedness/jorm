@@ -1,7 +1,6 @@
 package jorm
 
 import (
-	"fmt"
 	"go/ast"
 	"go/token"
 	"strings"
@@ -113,10 +112,8 @@ func (o *ORM) onInterfaceType(subtype *ast.InterfaceType, genDocList, tsDocList 
 			return
 		}
 	}
-	if len(typeSpec.TypeParams.List) != 2 {
-		return
-	}
-	// here to fine the entity
+
+	// here to find the entity
 	// since here the x is short name, we need to go back to the file to find the long import
 	// to find the import, we need to get the Imports (type []*ImportSpec) of the file
 	// search the slice, there is 2 cases
@@ -135,9 +132,7 @@ func (o *ORM) onInterfaceType(subtype *ast.InterfaceType, genDocList, tsDocList 
 	if key == "" {
 		return
 	}
-	//TODO id type not handled currently
-	var idField = typeSpec.TypeParams.List[1]
-	fmt.Println(idField)
+
 	if _, ok := o.MappingStore[key]; !ok {
 		o.MappingStore[key] = NewMapping()
 	}

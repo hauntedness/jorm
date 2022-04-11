@@ -42,15 +42,14 @@ func (m *Mapping) OnEntityReady() {
 			if len(field.Names) != 1 || !field.Names[0].IsExported() {
 				continue
 			}
-			var theOnlyField *ast.Ident = field.Names[0]
 			column, ok := ExtractTagValue(field, "jorm-column")
 			// depending on use tag or field name
 			if ok {
 				selects = append(selects, column)
 			} else {
-				selects = append(selects, theOnlyField.Name)
+				selects = append(selects, field.Names[0].Name)
 			}
-			m.FieldMap[theOnlyField.Name] = field
+			m.FieldMap[field.Names[0].Name] = field
 		}
 		m.SelectClause = "select " + strings.Join(selects, ", ")
 	}
@@ -87,25 +86,25 @@ func (m *Mapping) buildSelectSqlText(method *ast.Field) {
 	if !ok {
 		return
 	}
-	// check1: the length should match
-	// the param type must match struct field type
-	// if a slice is here, the pattern is something like: name in (?,?,?,?,?,?,?,?,?,?,?)
-	// so the sql is dynamic, the count of ? should be the length of the slice (or say can be inferred from names string[])
-	// so the code would be something like:
-	// func (b *bookRepository) FindByNameIn(names []string) (books []entity.Book, err error){
-	// 		var q = make([]string, 0, len(names))
-	// 		for range names {
-	//	 		q = append(q, "?")
-	// 		}
-	// 		...
-	// }
-	// rows, err := db.Query("SELECT id,name,author,version FROM book where id in ("+strings.Join(q, ",")+")", names)
+
 	names := strings.Split(after, "And")
 	for i, name := range names {
-		if len(names) == 1 && (name == "Id" || name == "ID") {
-			// TODO handle id particularly
-			return
-		}
+		// check1:
+		// if a slice is here, the pattern is something like: name in (?,?,?,?,?,?,?,?,?,?,?)
+		// so the sql is dynamic, the count of ? should be the length of the slice (or say can be inferred from names string[])
+		// so the code would be something like:
+		// func (b *bookRepository) FindByNameIn(names []string) (books []entity.Book, err error){
+		// 		var q = make([]string, 0, len(names))
+		// 		for range names {
+		//	 		q = append(q, "?")
+		// 		}
+		// 		...
+		// }
+		// rows, err := db.Query("SELECT id,name,author,version FROM book where id in ("+strings.Join(q, ",")+")", names)
+		// check2:
+		// get the corresponding type in entity of the names[i]
+		// get the param type or get underlying type if the param is slice
+		// jorm require that the two types must match
 		switch paramType := params[i].Type.(type) {
 		case *ast.Ident:
 			fmt.Println(paramType.Name)

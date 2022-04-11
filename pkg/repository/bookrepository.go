@@ -7,8 +7,8 @@ import (
 )
 
 //jorm-repository:"true"
-type BookRepository[T entity.Book, K int] interface {
-	FindById(k K) (book T, err error)
+type BookRepository[T entity.Book] interface {
+	FindById(id int) (book T, err error)
 	FindByNameAndAuthor(name string, author string) (book T, err error)
 	FindByNameIn(name []string) (books []T, err error)
 }
@@ -42,4 +42,4 @@ func (b *bookRepository) FindByNameIn(names []string) (books []entity.Book, err 
 	return
 }
 
-var _ BookRepository[entity.Book, int] = &bookRepository{}
+var _ BookRepository[entity.Book] = &bookRepository{}
