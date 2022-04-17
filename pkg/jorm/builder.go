@@ -18,18 +18,13 @@ import (
 
 type bookRepository struct{}
 
-func (b *bookRepository) FindByNameIn(names []string) (books []entity.Book, err error) {
-	var querys = make([]string, 0, len(names))
-	var params = make([]any, 0, len(names))
-	for _, name := range names {
-		querys = append(querys, "?")
-		params = append(params, name)
-	}
+func (b *bookRepository) FindByNameInAndAuthorIn(names []string, authors []string) (books []entity.Book, err error) {
+	var queryParams = make([]any, 0, len(names))
 	var selectClause = "SELECT id,name,author,version FROM book"
-	var whereClause = "where"
-	var qtext = "id in (" + strings.Join(querys, ",") + ")"
-	var exp = selectClause + " " + whereClause + " " + qtext
-	rows, err := db.Query(exp, params...)
+	var where = "where"
+	var whereClause = jormgen.AddArray("name", names, queryParams) + " and " + jormgen.AddArray("author", authors, queryParams)
+	var exp = selectClause + " " + where + " " + whereClause
+	rows, err := db.Query(exp, queryParams...)
 	for rows.Next() {
 		var book entity.Book
 		rows.Scan(&book.Id, &book.Name, &book.Author, &book.Version)
@@ -124,23 +119,107 @@ func (ss *StructStatement) Build() string {
 	return ss.Type + " " + ss.Name + " " + ss.Struct + " " + ss.LBrace + "\n" + strings.Join(fields, "\n") + "\n" + ss.RBrace + "\n"
 }
 
+/*
+
+func (b *bookRepository) FindByNameInAndAuthorIn(names []string, authors []string) (books []entity.Book, err error) {
+	var queryParams = make([]any, 0, len(names))
+	var selectClause = "SELECT id,name,author,version FROM book"
+	var where = "where"
+	var whereClause = jormgen.AddArray("name", names, queryParams) + " and " + jormgen.AddArray("author", authors, queryParams)
+	var exp = selectClause + " " + where + " " + whereClause
+	rows, err := db.Query(exp, queryParams...)
+	for rows.Next() {
+		var book entity.Book
+		rows.Scan(&book.Id, &book.Name, &book.Author, &book.Version)
+		books = append(books, book)
+	}
+	return
+}
+*/
 type FunctionStatement struct {
-	StructStatement
-	Text   string
-	Params []string
+	Func   string
+	Recv   ReceiverStatement
+	FuncP  FuncName
+	Return FuncReturn
+	LBrace string
+	Body   string
+	RBrace string
 }
 
-type Param struct {
+type FuncName struct {
+	Name   string
+	LBrace string
+	Fields []Field
+	RBrace string
 }
 
-type WhereClause struct {
-	Param []string
-	Text  string
+func (fn *FuncName) Build() {
+	var fields = make([]string, 0, len(fn.Fields))
+	for _, field := range fn.Fields {
+		fields = append(fields, field.Name+" "+field.Type)
+	}
+	if len(fn.Fields) > 0 {
+		fn.Name = fn.Name + " " + fn.LBrace + "\n" + strings.Join(fields, "\n") + "\n" + fn.RBrace + "\n"
+	} else {
+		fn.Name = fn.Name + " " + fn.LBrace + "\n" + fn.RBrace + "\n"
+	}
 }
 
-func (wc *WhereClause) AddIdent() {
+type FuncReturn struct {
+	LBrace string
+	Params []Field
+	RBrace string
 }
 
-func (wc *WhereClause) AddArray() {
+type ReceiverStatement struct {
+	LBrace string
+	Alias  string
+	Type   string
+	RBrace string
+}
 
+func NewReceiverStatement(alias string, typ string) *ReceiverStatement {
+	return &ReceiverStatement{
+		LBrace: "(",
+		Alias:  alias,
+		Type:   typ,
+		RBrace: ")",
+	}
+}
+
+func (rs *ReceiverStatement) Build() string {
+	return rs.LBrace + rs.Alias + " " + rs.Type + " " + rs.RBrace
+}
+
+/*
+var queryParams = make([]any, 0, len(names))
+var selectClause = "SELECT id,name,author,version FROM book"
+var where = "where"
+var whereClause = jormgen.AddArray("name", names, queryParams) + " and " + jormgen.AddArray("author", authors, queryParams)
+var exp = selectClause + " " + where + " " + whereClause
+rows, err := db.Query(exp, queryParams...)
+for rows.Next() {
+	var book entity.Book
+	rows.Scan(&book.Id, &book.Name, &book.Author, &book.Version)
+	books = append(books, book)
+}
+return
+*/
+type FunctionBody struct {
+	VarQueryClause  string
+	VarSelectClause string
+	VarWhereClause  string
+	VarExpression   string
+	StmtQuery       string
+	ForRowsNext     string
+	LBrace          string
+	ForVarEntity    string
+	ForStmtScan     string
+	ForAppend       string
+	RBrace          string
+	StmtReturn      string
+}
+
+func (fb *FunctionBody) Build() string {
+	return fb.VarQueryClause + "\n" + fb.VarSelectClause + "\n" + fb.VarWhereClause + "\n" + fb.VarExpression + "\n" + fb.StmtQuery + "\n" + fb.ForRowsNext + " " + fb.LBrace + "\n" + fb.ForVarEntity + "\n" + fb.ForStmtScan + "\n" + fb.ForAppend + "\n" + fb.RBrace + "\n" + fb.StmtReturn + "\n"
 }
