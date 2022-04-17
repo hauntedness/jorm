@@ -1,7 +1,6 @@
 package jorm
 
 import (
-	"errors"
 	"fmt"
 	"go/ast"
 	"strings"
@@ -86,42 +85,27 @@ func (m *Mapping) buildSelectCodeText(method *ast.Field) {
 	if !ok {
 		return
 	}
-
 	names := strings.Split(after, "And")
 	for i, name := range names {
-
-		field, op := m.ParseFieldNameAndOperand(name)
+		field, op := m.ParseFieldNameAndOperator(name)
 		if field == nil {
-			return
-		}
-		if ar, ok := params[i].Type.(*ast.ArrayType); !ok && (op == OP_IN || op == OP_NOTIN) {
-			fmt.Println(ar.Elt.(*ast.Ident).Name)
-			return
-		}
-		switch paramType := params[i].Type.(type) {
-		case *ast.Ident:
-			fmt.Println(paramType.Name)
-		case *ast.ArrayType:
-			name := params[i].Names[0].Name
-			var i = paramType.Elt.(*ast.Ident).Name
-			fmt.Println(name)
-			fmt.Println(i)
-		default:
 			return
 		}
 		// check for type match
 		if m.FieldMap[name].Type.(*ast.Ident).Name != params[i].Type.(*ast.Ident).Name {
 			return
 		}
-		if field, op := m.ParseFieldNameAndOperand(name); field != nil {
-			if n, ok := ExtractTagValue(field, "jorm-column"); ok {
-				criteria = append(criteria, op.BuildOper(n))
-			} else {
-				criteria = append(criteria, op.BuildOper(n))
-			}
-		} else {
-			return
+		var columnName string
+		var ok bool
+		if columnName, ok = ExtractTagValue(field, "jorm-column"); !ok {
+			columnName = m.FieldMap[name].Names[0].Name
 		}
+		exp, err := op.BuildElementExpression(columnName, m.FieldMap[name].Type, params[i].Names[0].Name, params[i].Type)
+		if err != nil {
+			panic(err)
+		}
+		//TODO
+		criteria = append(criteria, exp)
 	}
 
 	m.CodeText[funcName] = m.SelectClause + " " + m.TableName + " where " + strings.Join(criteria, " and ")
@@ -139,14 +123,15 @@ func (m *Mapping) buildDeleteCodeText(method *ast.Field) {
 
 }
 
-/**
+/*
 type Book struct {
 	Name         string
 	NameLessThan string
 }
+
 current impl is match BookLessThan such a field 1st, then NameLessThan = "some thing"
 */
-func (m *Mapping) ParseFieldNameAndOperand(section string) (field *ast.Field, op Operand) {
+func (m *Mapping) ParseFieldNameAndOperator(section string) (field *ast.Field, op RalationalOperator) {
 	utf8str := utf8string.NewString(section)
 	var runeCount = utf8str.RuneCount()
 	// try match by less runes
@@ -157,48 +142,10 @@ func (m *Mapping) ParseFieldNameAndOperand(section string) (field *ast.Field, op
 			if i == runeCount {
 				return field, OP_EQ
 			}
-			op = NewOperand(utf8str.Slice(i, runeCount))
+			op = NewRalationalOperator(utf8str.Slice(i, runeCount))
 			return field, op
 		}
 	}
 	// find field name prior to
-	return nil, NewOperand("")
-}
-
-/*
- #check1:
- - if a slice is here, the pattern is something like: name in (?,?,?,?,?,?,?,?,?,?,?) so the sql is dynamic,
- - the count of ? should be the length of the slice (or say can be inferred from names string[])
- - so the code would be something like:
- func (b *bookRepository) FindByNameIn(names []string) (books []entity.Book, err error){
- 		var q = make([]string, 0, len(names))
- 		for range names {
-	 		q = append(q, "?")
- 		}
- 		...
- }
- rows, err := db.Query("SELECT name,author FROM book where id in ("+strings.Join(q, ",")+")", names)
- #check2:
- - get the corresponding type in entity of the names[i]
- - get the param type or get underlying type if the param is slice
- - jorm require that the two types must match
- #check3:
- - if the method name is like FindByNameIn or FindByNameNotIn, the param type must be Slice
- - and vice versa
-*/
-//TODO
-func (m *Mapping) TodoBuildSegment(columnName string, columnType ast.Expr, paramName string, paramType ast.Expr, op Operand) (string, error) {
-	switch op {
-	case OP_IN, OP_NOTIN:
-		if ptype, ok := paramType.(*ast.ArrayType); ok && ptype.Elt.(*ast.Ident).Name == columnType.(*ast.Ident).Name {
-			fmt.Println("good")
-			// then here to compose code segment
-		}
-	default:
-		if paramType.(*ast.Ident).Name == columnType.(*ast.Ident).Name {
-			fmt.Println("good")
-			// then here to compose code segment
-		}
-	}
-	return "", errors.New("type of " + paramName + " doesn't match entity filed type:")
+	return nil, NewRalationalOperator("")
 }

@@ -21,10 +21,10 @@ func TestOrmMap(t *testing.T) {
 	//github.com/hauntedness/testast/pkg/entity
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "load: %v\n", err)
-		os.Exit(1)
+		t.Error(err)
 	}
 	if packages.PrintErrors(pkgs) > 0 {
-		os.Exit(1)
+		t.Error(err)
 	}
 
 	// Print the names of the source files
