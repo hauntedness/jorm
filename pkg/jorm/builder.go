@@ -1,6 +1,7 @@
 package jorm
 
 import (
+	"go/ast"
 	"strings"
 	"unicode"
 )
@@ -181,10 +182,20 @@ type FuncReturn struct {
 	RBrace string
 }
 
-func NewFuncReturn(entity Field) *FuncReturn {
+func NewFuncReturn(field *ast.Field) *FuncReturn {
+	var entityType string
+	switch ut := field.Type.(type) {
+	case *ast.ArrayType:
+		entityType = ut.Elt.(*ast.Ident).Name
+	case *ast.Ident:
+		entityType = ut.Name
+	}
+	var fields = make([]Field, 2)
+	fields[0] = NewField(field.Names[0].Name, entityType)
+	fields[1] = NewField("err", "error")
 	return &FuncReturn{
 		LBrace: "(",
-		Fields: make([]Field, 0),
+		Fields: fields,
 		RBrace: ")",
 	}
 }
@@ -221,62 +232,12 @@ func (rs *ReceiverStatement) Build() string {
 	return rs.LBrace + rs.Alias + " *" + rs.Type + " " + rs.RBrace
 }
 
-/*
-var queryParams = make([]any, 0, len(names))
-var selectClause = "SELECT id,name,author,version FROM book"
-var where = "where"
-var whereClause = jormgen.AddArray("name", names, queryParams) + " and " + jormgen.AddArray("author", authors, queryParams)
-var exp = selectClause + " " + where + " " + whereClause
-rows, err := db.Query(exp, queryParams...)
-for rows.Next() {
-	var book entity.Book
-	rows.Scan(&book.Id, &book.Name, &book.Author, &book.Version)
-	books = append(books, book)
-}
-return
-*/
-type FunctionBody struct {
-	VarQueryClause  string
-	VarSelectClause string
-	VarWhereClause  string
-	VarExpression   string
-	StmtQuery       string
-	ForRowsNext     string
-	LBrace          string
-	ForVarEntity    string
-	ForStmtScan     string
-	ForAppend       string
-	RBrace          string
-	StmtReturn      string
-}
-
-func (fb *FunctionBody) Build() string {
-	return fb.VarQueryClause + "\n" + fb.VarSelectClause + "\n" + fb.VarWhereClause + "\n" + fb.VarExpression + "\n" + fb.StmtQuery + "\n" + fb.ForRowsNext + " " + fb.LBrace + "\n" + fb.ForVarEntity + "\n" + fb.ForStmtScan + "\n" + fb.ForAppend + "\n" + fb.RBrace + "\n" + fb.StmtReturn + "\n"
-}
-
-func NewFunctionBody() *FunctionBody {
-	return &FunctionBody{
-		VarQueryClause:  "",
-		VarSelectClause: "",
-		VarWhereClause:  "",
-		VarExpression:   `var exp = selectClause + where + whereClause`,
-		StmtQuery:       `rows, err := db.Query(exp, queryParams...)`,
-		ForRowsNext:     `for rows.Next()`,
-		LBrace:          "{",
-		ForVarEntity:    "",
-		ForStmtScan:     "",
-		ForAppend:       "",
-		RBrace:          "}",
-		StmtReturn:      "return",
-	}
-}
-
 func NewFunctionStatement(funcName string, recv string, returnType string) *FunctionStatement {
 	return &FunctionStatement{
 		Func:   "func",
 		Recv:   NewReceiverStatement(recv),
 		FuncP:  NewFuncName(funcName),
-		Return: NewFuncReturn(NewField(CaseTitleToCamal(returnType), returnType)),
+		Return: NewFuncReturn(nil),
 		LBrace: "{",
 		Body:   NewFunctionBody(),
 		RBrace: "}",
