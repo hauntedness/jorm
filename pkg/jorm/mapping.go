@@ -78,8 +78,6 @@ func (m *Mapping) BuildSqlText() {
 //TODO,
 func (m *Mapping) buildFindFunc(method *ast.Field) {
 	funcStmt := NewFunctionStatement(method.Names[0].Name, m.Repository.Name.Name, m.Entity.Name.Name)
-	// here to
-	funcReturn := funcStmt.Return
 	body := funcStmt.Body
 	var criteria = make([]string, 0)
 	// split function name into column list
@@ -113,8 +111,10 @@ func (m *Mapping) buildFindFunc(method *ast.Field) {
 	// TODO here the return type depend on sql result
 	// for one row queryrow
 	// for multiple row query
-	funcReturn.Fields[0].Name = funcReturn.Fields[0].Name + "List"
-	funcReturn.Fields[0].Type = "[]" + funcReturn.Fields[0].Type
+	// here to
+	funcStmt.Return = nil
+	funcStmt.Return.Fields[0].Name = funcStmt.Return.Fields[0].Name + "List"
+	funcStmt.Return.Fields[0].Type = "[]" + funcStmt.Return.Fields[0].Type
 	// funcReturn.Fields[1]
 	// books = append(books, book)
 	var book = funcStmt.Return.Fields[0].Name

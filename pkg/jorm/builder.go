@@ -182,16 +182,14 @@ type FuncReturn struct {
 	RBrace string
 }
 
-func NewFuncReturn(field *ast.Field) *FuncReturn {
-	var entityType string
-	switch ut := field.Type.(type) {
-	case *ast.ArrayType:
-		entityType = ut.Elt.(*ast.Ident).Name
-	case *ast.Ident:
-		entityType = ut.Name
-	}
+func NewFuncReturn(field *ast.Field, entity *ast.TypeSpec, pkg string) *FuncReturn {
 	var fields = make([]Field, 2)
-	fields[0] = NewField(field.Names[0].Name, entityType)
+	switch field.Type.(type) {
+	case *ast.ArrayType:
+		fields[0] = NewField(CaseTitleToCamal(entity.Name.Name)+"List", "[]"+pkg+`.`+entity.Name.Name)
+	case *ast.Ident:
+		fields[0] = NewField(CaseTitleToCamal(entity.Name.Name), pkg+`.`+entity.Name.Name)
+	}
 	fields[1] = NewField("err", "error")
 	return &FuncReturn{
 		LBrace: "(",
@@ -237,7 +235,7 @@ func NewFunctionStatement(funcName string, recv string, returnType string) *Func
 		Func:   "func",
 		Recv:   NewReceiverStatement(recv),
 		FuncP:  NewFuncName(funcName),
-		Return: NewFuncReturn(nil),
+		Return: nil,
 		LBrace: "{",
 		Body:   NewFunctionBody(),
 		RBrace: "}",

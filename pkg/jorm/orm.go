@@ -10,10 +10,10 @@ import (
 )
 
 var (
-	ENTITY     = "jorm-entity"
-	TABLE      = "jorm-table"
-	COLUMN     = "jorm-column"
-	REPOSITORY = "jorm-repository"
+	JORM_ENTITY     = "jorm-entity"
+	JORM_TABLE      = "jorm-table"
+	JORM_COLUMN     = "jorm-column"
+	JORM_REPOSITORY = "jorm-repository"
 )
 
 type ORM struct {
