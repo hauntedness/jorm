@@ -169,6 +169,13 @@ func (m *Mapping) BuildFuncStmt(method *ast.Field, criteria []string) {
 	// books = append(books, book)
 	var bookList = funcStmt.Return.Fields[0].Name
 	body.ForAppend = bookList + " = append(" + bookList + ", " + book + ")"
+	var scan = "rows.Scan("
+	var fields = make([]string, 0)
+	for _, elem := range m.Entity.Type.(*ast.StructType).Fields.List {
+		// rows.Scan(&book.Id, &book.Name, &book.Author, &book.Version)
+		fields = append(fields, "&"+book+`.`+elem.Names[0].Name)
+	}
+	body.ForStmtScan = scan + strings.Join(fields, ", ") + ")"
 	m.FuncMap[methodName] = funcStmt
 	m.FuncMapText[methodName] = funcStmt.Build()
 }
