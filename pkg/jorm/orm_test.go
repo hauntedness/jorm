@@ -32,7 +32,14 @@ func TestOrmMap(t *testing.T) {
 	var orm = NewORM()
 	orm.iterate(pkgs)
 	for _, v := range orm.MappingStore {
-		fmt.Printf("%#v", v)
+		//fmt.Printf("%#v", v)
+		for _, elem := range v.FuncMapText {
+			// bytes, err := format.Source([]byte(elem))
+			// if err != nil {
+			// 	panic(err)
+			// }
+			fmt.Fprintln(os.Stdout, string(elem))
+		}
 	}
 }
 

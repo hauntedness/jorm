@@ -1,10 +1,5 @@
 package jorm
 
-import (
-	"go/ast"
-	"strings"
-)
-
 /*
 var queryParams = make([]any, 0, len(names))
 var selectClause = "SELECT id,name,author,version FROM book"
@@ -44,7 +39,7 @@ func NewFunctionBody() *FunctionBody {
 		VarQueryClause:  "var queryParams = make([]any, 0)",
 		VarSelectClause: "",
 		VarWhereClause:  "",
-		VarExpression:   `var exp = selectClause + where + whereClause`,
+		VarExpression:   `var exp = selectClause + " where " + whereClause`,
 		StmtQuery:       `rows, err := db.Query(exp, queryParams...)`,
 		ForRowsNext:     `for rows.Next()`,
 		LBrace:          "{",
@@ -54,32 +49,4 @@ func NewFunctionBody() *FunctionBody {
 		RBrace:          "}",
 		StmtReturn:      "return",
 	}
-}
-
-type SelectClause struct {
-	Entity *ast.TypeSpec
-}
-
-func NewSelectClause(entity *ast.TypeSpec) *SelectClause {
-	return &SelectClause{
-		Entity: entity,
-	}
-}
-
-func (sc *SelectClause) Build() string {
-	st := sc.Entity.Type.(*ast.StructType)
-	var selects []string = make([]string, 0, len(st.Fields.List))
-	for _, field := range st.Fields.List {
-		if len(field.Names) != 1 || !field.Names[0].IsExported() {
-			continue
-		}
-		column, ok := ExtractTagValue(field, JORM_COLUMN)
-		// depending on use tag or field name
-		if ok {
-			selects = append(selects, column)
-		} else {
-			selects = append(selects, field.Names[0].Name)
-		}
-	}
-	return "select " + strings.Join(selects, ", ")
 }

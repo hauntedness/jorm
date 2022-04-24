@@ -77,29 +77,21 @@ func (m *Mapping) BuildSqlText() {
 
 //TODO,
 func (m *Mapping) buildFindFunc(method *ast.Field) {
-	funcStmt := NewFunctionStatement(method.Names[0].Name, m.Repository.Name.Name, m.Entity.Name.Name)
-	body := funcStmt.Body
-	var criteria = make([]string, 0)
+	method_ := method.Type.(*ast.FuncType)
+	params := method_.Params.List
 	// split function name into column list
 	funcName := method.Names[0].Name
-	params := method.Type.(*ast.FuncType).Params.List
+	var criteria = make([]string, 0)
 	// todo findAutherByName
 	// todo findAllByName based on return type
 	_, after, ok := strings.Cut(funcName, "FindBy")
 	if !ok {
 		return
 	}
-	body.VarSelectClause = `var selectClause = "` + m.SelectClause + " from " + m.TableName + `"`
-	body.VarWhereClause = `var whereClause = ` + strings.Join(criteria, " and ")
-	//TODO here to find the package
-	body.ForVarEntity = `var ` + CaseTitleToCamal(m.Entity.Name.Name) + " " + ExtractPackageNameFromPath(m.EntityPath) + `.` + m.Entity.Name.Name
-	body.ForStmtScan = ""
-
 	names := strings.Split(after, "And")
 	for i, name := range names {
 		field, op := m.ParseFieldNameAndOperator(name)
 		name = field.Names[0].Name
-		//m.checkForTypeMatch(field, name, params[i])
 		var columnName string
 		var ok bool
 		if columnName, ok = ExtractTagValue(field, "jorm-column"); !ok {
@@ -108,21 +100,8 @@ func (m *Mapping) buildFindFunc(method *ast.Field) {
 		exp := op.BuildElementExpression(columnName, m.FieldMap[name].Type, params[i].Names[0].Name, params[i].Type)
 		criteria = append(criteria, exp)
 	}
-	// TODO here the return type depend on sql result
-	// for one row queryrow
-	// for multiple row query
-	// here to
-	funcStmt.Return = nil
-	funcStmt.Return.Fields[0].Name = funcStmt.Return.Fields[0].Name + "List"
-	funcStmt.Return.Fields[0].Type = "[]" + funcStmt.Return.Fields[0].Type
-	// funcReturn.Fields[1]
-	// books = append(books, book)
-	var book = funcStmt.Return.Fields[0].Name
-	body.ForAppend = book + " = append(" + funcStmt.Return.Fields[0].Name + " ," + book + ")"
-	m.FuncMap[funcName] = funcStmt
-	m.FuncMapText[funcName] = funcStmt.Build()
 	m.SqlText[funcName] = m.SelectClause + " from " + m.TableName + " where " + strings.Join(criteria, " and ")
-
+	m.BuildFuncStmt(method, criteria)
 }
 
 func (m *Mapping) buildInsertFunc(method *ast.Field) {
@@ -161,4 +140,35 @@ func (m *Mapping) ParseFieldNameAndOperator(section string) (field *ast.Field, o
 		}
 	}
 	panic("can't parse this section:" + section)
+}
+
+func (m *Mapping) BuildFuncStmt(method *ast.Field, criteria []string) {
+	method_ := method.Type.(*ast.FuncType)
+	methodName := method.Names[0].Name
+	funcStmt := NewFunctionStatement(method.Names[0].Name, m.Repository.Name.Name, m.Entity.Name.Name)
+	body := funcStmt.Body
+	// here get a returned type parameter T any or []T any
+	// while it doesn't matter as here we only check whether it return slice
+	returnType := method_.Results.List[0]
+	var pkg = ExtractPackageNameFromPath(m.EntityPath)
+	body.VarSelectClause = `var selectClause = "` + m.SelectClause + " from " + m.TableName + `"`
+	// TODO bug, here is 2 cases
+	// id = ? and book in (?,?,?)
+	// so the stmt should be var whereClause = "id = ? and " + jormgen.AddNotIn("author", authors, queryParams)
+	body.VarWhereClause = `var whereClause = "` + strings.Join(criteria, " and ") + `"`
+	//TODO here to find the package
+	var book = CaseTitleToCamal(m.Entity.Name.Name)
+	body.ForVarEntity = `var ` + book + " " + pkg + `.` + m.Entity.Name.Name
+	body.ForStmtScan = ""
+	// TODO here the return type depend on sql result
+	// for one row queryrow
+	// for multiple row query
+	// here to
+	funcStmt.Return = NewFuncReturn(returnType, m.Entity, pkg)
+	// funcReturn.Fields[1]
+	// books = append(books, book)
+	var bookList = funcStmt.Return.Fields[0].Name
+	body.ForAppend = bookList + " = append(" + bookList + " ," + book + ")"
+	m.FuncMap[methodName] = funcStmt
+	m.FuncMapText[methodName] = funcStmt.Build()
 }
