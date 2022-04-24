@@ -33,9 +33,10 @@ func (fb *FunctionBody) Build() string {
 	return fb.VarQueryClause + "\n" + fb.VarSelectClause + "\n" + fb.VarWhereClause + "\n" + fb.VarExpression + "\n" + fb.StmtQuery + "\n" + fb.ForRowsNext + " " + fb.LBrace + "\n" + fb.ForVarEntity + "\n" + fb.ForStmtScan + "\n" + fb.ForAppend + "\n" + fb.RBrace + "\n" + fb.StmtReturn + "\n"
 }
 
+// var queryParams = make([]any, 0, len(names))
 func NewFunctionBody() *FunctionBody {
 	return &FunctionBody{
-		VarQueryClause:  "",
+		VarQueryClause:  "var queryParams = make([]any, 0)",
 		VarSelectClause: "",
 		VarWhereClause:  "",
 		VarExpression:   `var exp = selectClause + where + whereClause`,
@@ -49,6 +50,3 @@ func NewFunctionBody() *FunctionBody {
 		StmtReturn:      "return",
 	}
 }
-
-
-type VarQueryClause struct{}

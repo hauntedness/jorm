@@ -91,7 +91,6 @@ func (m *Mapping) buildFindFunc(method *ast.Field) {
 	if !ok {
 		return
 	}
-	body.VarQueryClause = "TODO"
 	body.VarSelectClause = `var selectClause = "` + m.SelectClause + " from " + m.TableName + `"`
 	body.VarWhereClause = `var whereClause = ` + strings.Join(criteria, " and ")
 	//TODO here to find the package
