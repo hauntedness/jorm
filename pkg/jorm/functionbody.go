@@ -49,3 +49,6 @@ func NewFunctionBody() *FunctionBody {
 		StmtReturn:      "return",
 	}
 }
+
+
+type VarQueryClause struct{}
