@@ -40,7 +40,7 @@ func NewFunctionBody() *FunctionBody {
 		VarSelectClause: "",
 		VarWhereClause:  "",
 		VarExpression:   `var exp = selectClause + " where " + whereClause`,
-		StmtQuery:       `rows, err := db.Query(exp, queryParams...)`,
+		StmtQuery:       "rows, err := db.Query(exp, queryParams...)\nif err != nil {\nreturn nil, err\n}\ndefer rows.Close()",
 		ForRowsNext:     `for rows.Next()`,
 		LBrace:          "{",
 		ForVarEntity:    "",

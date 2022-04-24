@@ -35,6 +35,10 @@ func (b *bookRepository) FindByNameInAndAuthorNotIn(names []string, authors []st
 	var whereClause = jormgen.AddIn("name", names, queryParams) + " and " + jormgen.AddNotIn("author", authors, queryParams)
 	var exp = selectClause + " " + where + " " + whereClause
 	rows, err := db.Query(exp, queryParams...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
 	for rows.Next() {
 		var book entity.Book
 		rows.Scan(&book.Id, &book.Name, &book.Author, &book.Version)

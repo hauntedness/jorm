@@ -168,7 +168,7 @@ func (m *Mapping) BuildFuncStmt(method *ast.Field, criteria []string) {
 	// funcReturn.Fields[1]
 	// books = append(books, book)
 	var bookList = funcStmt.Return.Fields[0].Name
-	body.ForAppend = bookList + " = append(" + bookList + " ," + book + ")"
+	body.ForAppend = bookList + " = append(" + bookList + ", " + book + ")"
 	m.FuncMap[methodName] = funcStmt
 	m.FuncMapText[methodName] = funcStmt.Build()
 }
