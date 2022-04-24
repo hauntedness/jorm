@@ -98,11 +98,11 @@ func (o *ORM) iterateGenDecls(genDecl *ast.GenDecl, file *ast.File, pkg *package
 				continue
 			}
 
-			switch subtype := typeSpec.Type.(type) {
+			switch typeSpec.Type.(type) {
 			case *ast.StructType:
-				o.onStructType(subtype, genDocList, tsDocList, typeSpec, file, pkg)
+				o.onStructType(genDocList, tsDocList, typeSpec, file, pkg)
 			case *ast.InterfaceType:
-				o.onInterfaceType(subtype, genDocList, tsDocList, typeSpec, file, pkg)
+				o.onInterfaceType(genDocList, tsDocList, typeSpec, file, pkg)
 			default:
 				// do nothing
 			}
@@ -110,7 +110,7 @@ func (o *ORM) iterateGenDecls(genDecl *ast.GenDecl, file *ast.File, pkg *package
 	}
 }
 
-func (o *ORM) onInterfaceType(subtype *ast.InterfaceType, genDocList, tsDocList []*ast.Comment, typeSpec *ast.TypeSpec, file *ast.File, pkg *packages.Package) {
+func (o *ORM) onInterfaceType(genDocList, tsDocList []*ast.Comment, typeSpec *ast.TypeSpec, file *ast.File, pkg *packages.Package) {
 	var key string
 	// get doc to see if it is jorm repostiroy
 	for _, comment := range genDocList {
@@ -143,12 +143,12 @@ func (o *ORM) onInterfaceType(subtype *ast.InterfaceType, genDocList, tsDocList 
 	if _, ok := o.MappingStore[key]; !ok {
 		o.MappingStore[key] = NewMapping()
 	}
-	o.MappingStore[key].Repository = subtype
+	o.MappingStore[key].Repository = typeSpec
 	o.MappingStore[key].Status = o.MappingStore[key].Status | RepositoryReady
 	o.MappingStore[key].BuildSqlText()
 }
 
-func (o *ORM) onStructType(subtype *ast.StructType, genDocList, tsDocList []*ast.Comment, typeSpec *ast.TypeSpec, file *ast.File, pkg *packages.Package) {
+func (o *ORM) onStructType(genDocList, tsDocList []*ast.Comment, typeSpec *ast.TypeSpec, file *ast.File, pkg *packages.Package) {
 	jormEntity := ""
 	jormTable := ""
 	for _, v := range genDocList {
@@ -176,7 +176,7 @@ func (o *ORM) onStructType(subtype *ast.StructType, genDocList, tsDocList []*ast
 	if value, ok := extract(jormTable, "jorm-table"); ok {
 		o.MappingStore[key].TableName = value
 	}
-	o.MappingStore[key].Entity = subtype
+	o.MappingStore[key].Entity = typeSpec
 	o.MappingStore[key].EntityPath = key
 	o.MappingStore[key].Status = o.MappingStore[key].Status | EntityReady
 	o.MappingStore[key].OnEntityReady()

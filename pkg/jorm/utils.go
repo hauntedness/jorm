@@ -2,6 +2,7 @@ package jorm
 
 import (
 	"go/ast"
+	"strings"
 	"unicode"
 )
 
@@ -51,4 +52,30 @@ func CaseTitleToSnake(text string) string {
 		}
 	}
 	return string(words)
+}
+
+// Id -> id
+// BookName -> bookName
+func CaseTitleToCamal(text string) string {
+	runes := []rune(text)
+	length := len(runes)
+	if length == 0 {
+		return text
+	} else if length == 1 && unicode.IsUpper(runes[0]) {
+		return strings.ToLower(text)
+	} else if length > 1 && unicode.IsUpper(runes[0]) {
+		runes[0] = unicode.ToLower(runes[0])
+		return string(runes)
+	} else {
+		return text
+	}
+}
+
+func ExtractNameFromPath(path string) string {
+	_, after, found := strings.Cut(path, "::")
+	if found {
+		return after
+	} else {
+		panic("can't extract name from " + path)
+	}
 }

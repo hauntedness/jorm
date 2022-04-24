@@ -2,6 +2,7 @@ package jorm
 
 import (
 	"strings"
+	"unicode"
 )
 
 type Builder interface {
@@ -138,11 +139,11 @@ func (b *bookRepository) FindByNameInAndAuthorIn(names []string, authors []strin
 */
 type FunctionStatement struct {
 	Func   string
-	Recv   ReceiverStatement
-	FuncP  FuncName
-	Return FuncReturn
+	Recv   *ReceiverStatement
+	FuncP  *FuncName
+	Return *FuncReturn
 	LBrace string
-	Body   FunctionBody
+	Body   *FunctionBody
 	RBrace string
 }
 
@@ -153,22 +154,51 @@ type FuncName struct {
 	RBrace string
 }
 
-func (fn *FuncName) Build() {
+func NewFuncName(name string) *FuncName {
+	return &FuncName{
+		Name:   name,
+		LBrace: "(",
+		Fields: make([]Field, 0),
+		RBrace: ")",
+	}
+}
+
+func (fn *FuncName) Build() string {
 	var fields = make([]string, 0, len(fn.Fields))
 	for _, field := range fn.Fields {
 		fields = append(fields, field.Name+" "+field.Type)
 	}
 	if len(fn.Fields) > 0 {
-		fn.Name = fn.Name + " " + fn.LBrace + "\n" + strings.Join(fields, "\n") + "\n" + fn.RBrace + "\n"
+		return fn.Name + fn.LBrace + " " + strings.Join(fields, ",") + " " + fn.RBrace
 	} else {
-		fn.Name = fn.Name + " " + fn.LBrace + "\n" + fn.RBrace + "\n"
+		return fn.Name + fn.LBrace + fn.RBrace
 	}
 }
 
 type FuncReturn struct {
 	LBrace string
-	Params []Field
+	Fields []Field
 	RBrace string
+}
+
+func NewFuncReturn(entity Field) *FuncReturn {
+	return &FuncReturn{
+		LBrace: "(",
+		Fields: []Field{entity, NewField("err", "error")},
+		RBrace: ")",
+	}
+}
+
+func (fr *FuncReturn) Build() string {
+	var params = make([]string, 0, len(fr.Fields))
+	for _, param := range fr.Fields {
+		params = append(params, param.Name+" "+param.Type)
+	}
+	if len(fr.Fields) > 0 {
+		return fr.LBrace + strings.Join(params, ",") + fr.RBrace
+	} else {
+		return fr.LBrace + fr.RBrace
+	}
 }
 
 type ReceiverStatement struct {
@@ -178,17 +208,17 @@ type ReceiverStatement struct {
 	RBrace string
 }
 
-func NewReceiverStatement(alias string, typ string) *ReceiverStatement {
+func NewReceiverStatement(typ string) *ReceiverStatement {
 	return &ReceiverStatement{
 		LBrace: "(",
-		Alias:  alias,
+		Alias:  string(unicode.ToLower([]rune(typ)[0])),
 		Type:   typ,
 		RBrace: ")",
 	}
 }
 
 func (rs *ReceiverStatement) Build() string {
-	return rs.LBrace + rs.Alias + " " + rs.Type + " " + rs.RBrace
+	return rs.LBrace + rs.Alias + " *" + rs.Type + " " + rs.RBrace
 }
 
 /*
@@ -224,11 +254,35 @@ func (fb *FunctionBody) Build() string {
 	return fb.VarQueryClause + "\n" + fb.VarSelectClause + "\n" + fb.VarWhereClause + "\n" + fb.VarExpression + "\n" + fb.StmtQuery + "\n" + fb.ForRowsNext + " " + fb.LBrace + "\n" + fb.ForVarEntity + "\n" + fb.ForStmtScan + "\n" + fb.ForAppend + "\n" + fb.RBrace + "\n" + fb.StmtReturn + "\n"
 }
 
-func NewFunctionStatement(funcName string, recv ReceiverStatement, returnType string) *FunctionStatement {
+func NewFunctionBody() *FunctionBody {
+	return &FunctionBody{
+		VarQueryClause:  "var queryParams = make([]any, 0, len(names))",
+		VarSelectClause: "",
+		VarWhereClause:  "",
+		VarExpression:   `var exp = selectClause + " " + where + " " + whereClause`,
+		StmtQuery:       `rows, err := db.Query(exp, queryParams...)`,
+		ForRowsNext:     `for rows.Next()`,
+		LBrace:          "{",
+		ForVarEntity:    "",
+		ForStmtScan:     "",
+		ForAppend:       "",
+		RBrace:          "}",
+		StmtReturn:      "return",
+	}
+}
+
+func NewFunctionStatement(funcName string, recv string, returnType string) *FunctionStatement {
 	return &FunctionStatement{
 		Func:   "func",
-		Recv:   recv,
-		FuncP:  FuncName{Name: funcName, LBrace: "(", RBrace: ")"},
-		Return: FuncReturn{LBrace: "(", RBrace: ")", Params: make([]Field, 0)},
+		Recv:   NewReceiverStatement(recv),
+		FuncP:  NewFuncName(funcName),
+		Return: NewFuncReturn(NewField(CaseTitleToCamal(returnType), returnType)),
+		LBrace: "{",
+		Body:   NewFunctionBody(),
+		RBrace: "}",
 	}
+}
+
+func (fs *FunctionStatement) Build() string {
+	return fs.Func + " " + fs.Recv.Build() + " " + fs.FuncP.Build() + " " + fs.Return.Build() + " " + fs.LBrace + "\n" + fs.Body.Build() + "\n" + fs.RBrace
 }
