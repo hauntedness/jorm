@@ -256,10 +256,10 @@ func (fb *FunctionBody) Build() string {
 
 func NewFunctionBody() *FunctionBody {
 	return &FunctionBody{
-		VarQueryClause:  "var queryParams = make([]any, 0, len(names))",
+		VarQueryClause:  "",
 		VarSelectClause: "",
 		VarWhereClause:  "",
-		VarExpression:   `var exp = selectClause + " " + where + " " + whereClause`,
+		VarExpression:   `var exp = selectClause + " where " + whereClause`,
 		StmtQuery:       `rows, err := db.Query(exp, queryParams...)`,
 		ForRowsNext:     `for rows.Next()`,
 		LBrace:          "{",

@@ -71,10 +71,15 @@ func CaseTitleToCamal(text string) string {
 	}
 }
 
-func ExtractNameFromPath(path string) string {
-	_, after, found := strings.Cut(path, "::")
+func ExtractPackageNameFromPath(path string) string {
+	before, _, found := strings.Cut(path, "::")
 	if found {
-		return after
+		splits := strings.Split(before, `/`)
+		if len(splits) > 0 {
+			return splits[len(splits)-1]
+		} else {
+			panic("can't extract name from " + path)
+		}
 	} else {
 		panic("can't extract name from " + path)
 	}

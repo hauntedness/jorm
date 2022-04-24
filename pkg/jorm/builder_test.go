@@ -27,7 +27,7 @@ func TestFunctionBodyBuild(t *testing.T) {
 		VarQueryClause:  "var queryParams = make([]any, 0, len(names))",
 		VarSelectClause: `var selectClause = "SELECT id,name,author,version FROM book"`,
 		VarWhereClause:  `var whereClause = "where " + jormgen.AddArray("name", names, queryParams) + " and " + jormgen.AddArray("author", authors, queryParams)`,
-		VarExpression:   `var exp = selectClause + " " + where + " " + whereClause`,
+		VarExpression:   `var exp = selectClause + whereClause`,
 		StmtQuery:       `rows, err := db.Query(exp, queryParams...)`,
 		ForRowsNext:     `for rows.Next()`,
 		LBrace:          "{",

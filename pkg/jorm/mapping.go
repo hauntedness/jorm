@@ -92,8 +92,9 @@ func (m *Mapping) buildFindFunc(method *ast.Field) {
 		return
 	}
 	body.VarSelectClause = `var selectClause = "` + m.SelectClause + " from " + m.TableName + `"`
-	body.VarWhereClause = `var whereClause = where ` + strings.Join(criteria, " and ")
-	body.ForVarEntity = `var ` + CaseTitleToCamal(m.Entity.Name.Name) + ExtractNameFromPath(m.EntityPath) + `.` + m.Entity.Name.Name
+	body.VarWhereClause = `var whereClause = ` + strings.Join(criteria, " and ")
+	//TODO here to find the package
+	body.ForVarEntity = `var ` + CaseTitleToCamal(m.Entity.Name.Name) + " " + ExtractPackageNameFromPath(m.EntityPath) + `.` + m.Entity.Name.Name
 	body.ForStmtScan = ""
 
 	names := strings.Split(after, "And")
@@ -106,17 +107,18 @@ func (m *Mapping) buildFindFunc(method *ast.Field) {
 		if columnName, ok = ExtractTagValue(field, "jorm-column"); !ok {
 			columnName = m.FieldMap[name].Names[0].Name
 		}
-		if op == OP_IN || op == OP_NOTIN {
-			funcReturn.Fields[1].Name = funcReturn.Fields[1].Name + "List"
-			funcReturn.Fields[1].Type = "[]" + funcReturn.Fields[1].Type
-		}
 		exp := op.BuildElementExpression(columnName, m.FieldMap[name].Type, params[i].Names[0].Name, params[i].Type)
 		criteria = append(criteria, exp)
 	}
+	// TODO here the return type depend on sql result
+	// for one row queryrow
+	// for multiple row query
+	funcReturn.Fields[0].Name = funcReturn.Fields[0].Name + "List"
+	funcReturn.Fields[0].Type = "[]" + funcReturn.Fields[0].Type
 	// funcReturn.Fields[1]
 	// books = append(books, book)
-	var book = string(funcStmt.Return.Fields[1].Name[0])
-	body.ForAppend = book + " = append(" + funcStmt.Return.Fields[1].Name + " ," + book + ")"
+	var book = funcStmt.Return.Fields[0].Name
+	body.ForAppend = book + " = append(" + funcStmt.Return.Fields[0].Name + " ," + book + ")"
 	m.FuncMap[funcName] = funcStmt
 	m.FuncMapText[funcName] = funcStmt.Build()
 	m.SqlText[funcName] = m.SelectClause + " from " + m.TableName + " where " + strings.Join(criteria, " and ")
