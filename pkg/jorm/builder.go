@@ -184,7 +184,7 @@ type FuncReturn struct {
 func NewFuncReturn(entity Field) *FuncReturn {
 	return &FuncReturn{
 		LBrace: "(",
-		Fields: []Field{entity, NewField("err", "error")},
+		Fields: make([]Field, 0),
 		RBrace: ")",
 	}
 }
@@ -259,7 +259,7 @@ func NewFunctionBody() *FunctionBody {
 		VarQueryClause:  "",
 		VarSelectClause: "",
 		VarWhereClause:  "",
-		VarExpression:   `var exp = selectClause + " where " + whereClause`,
+		VarExpression:   `var exp = selectClause + where + whereClause`,
 		StmtQuery:       `rows, err := db.Query(exp, queryParams...)`,
 		ForRowsNext:     `for rows.Next()`,
 		LBrace:          "{",
