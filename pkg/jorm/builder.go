@@ -142,7 +142,7 @@ type FunctionStatement struct {
 	FuncP  FuncName
 	Return FuncReturn
 	LBrace string
-	Body   string
+	Body   FunctionBody
 	RBrace string
 }
 
@@ -222,4 +222,13 @@ type FunctionBody struct {
 
 func (fb *FunctionBody) Build() string {
 	return fb.VarQueryClause + "\n" + fb.VarSelectClause + "\n" + fb.VarWhereClause + "\n" + fb.VarExpression + "\n" + fb.StmtQuery + "\n" + fb.ForRowsNext + " " + fb.LBrace + "\n" + fb.ForVarEntity + "\n" + fb.ForStmtScan + "\n" + fb.ForAppend + "\n" + fb.RBrace + "\n" + fb.StmtReturn + "\n"
+}
+
+func NewFunctionStatement(funcName string, recv ReceiverStatement, returnType string) *FunctionStatement {
+	return &FunctionStatement{
+		Func:   "func",
+		Recv:   recv,
+		FuncP:  FuncName{Name: funcName, LBrace: "(", RBrace: ")"},
+		Return: FuncReturn{LBrace: "(", RBrace: ")", Params: make([]Field, 0)},
+	}
 }

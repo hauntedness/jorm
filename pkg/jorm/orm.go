@@ -9,6 +9,13 @@ import (
 	"golang.org/x/tools/go/packages"
 )
 
+var (
+	ENTITY     = "jorm-entity"
+	TABLE      = "jorm-table"
+	COLUMN     = "jorm-column"
+	REPOSITORY = "jorm-repository"
+)
+
 type ORM struct {
 	RootPath     string
 	MappingStore map[string]*Mapping

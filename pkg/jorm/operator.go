@@ -6,7 +6,7 @@ import (
 )
 
 type RalationalOperator interface {
-	BuildElementExpression(columnName string, elemType ast.Expr, paramName string, paramType ast.Expr) (string, error)
+	BuildElementExpression(columnName string, elemType ast.Expr, paramName string, paramType ast.Expr) string
 }
 
 type ralationalOperator string
@@ -54,8 +54,10 @@ func NewRalationalOperator(str string) RalationalOperator {
  - and vice versa
 */
 //TODO
-func (op ralationalOperator) BuildElementExpression(columnName string, elemType ast.Expr, paramName string, paramType ast.Expr) (string, error) {
-
+func (op ralationalOperator) BuildElementExpression(columnName string, elemType ast.Expr, paramName string, paramType ast.Expr) string {
+	if columnName == "" {
+		panic("columnName is empty")
+	}
 	if op == OP_IN || op == OP_NOTIN {
 		var paramArrayType *ast.ArrayType
 		var paramIdent *ast.Ident
@@ -63,18 +65,18 @@ func (op ralationalOperator) BuildElementExpression(columnName string, elemType 
 		var ok bool
 		paramArrayType, ok = paramType.(*ast.ArrayType)
 		if !ok {
-			return "", errors.New("wrong param type")
+			panic("wrong param type")
 		}
 		paramIdent, ok = paramArrayType.Elt.(*ast.Ident)
 		if !ok {
-			return "", errors.New("wrong param type")
+			panic("wrong param type")
 		}
 		elemIdent, ok = elemType.(*ast.Ident)
 		if !ok {
-			return "", errors.New("wrong element type")
+			panic("wrong element type")
 		}
 		if paramIdent.Name != elemIdent.Name {
-			return "", errors.New("element type doesn't match param type")
+			panic("element type doesn't match param type")
 		}
 		return op.buildMultipleExp(columnName, paramName)
 	} else {
@@ -83,14 +85,14 @@ func (op ralationalOperator) BuildElementExpression(columnName string, elemType 
 		var ok bool
 		paramIdent, ok = paramType.(*ast.Ident)
 		if !ok {
-			return "", errors.New("wrong param type")
+			panic("wrong param type")
 		}
 		elemIdent, ok = elemType.(*ast.Ident)
 		if !ok {
-			return "", errors.New("wrong element type")
+			panic("wrong element type")
 		}
 		if paramIdent.Name != elemIdent.Name {
-			return "", errors.New("type doesn't match")
+			panic("type doesn't match")
 		}
 		return op.buildSingleValueExp(columnName)
 	}
@@ -128,33 +130,32 @@ func (op ralationalOperator) Build() []any {
 	return clause
 }
 
-func (op ralationalOperator) buildSingleValueExp(column string) (string, error) {
+func (op ralationalOperator) buildSingleValueExp(column string) string {
 	switch op {
 	case OP_EQ:
-		return column + " = ?", nil
+		return column + " = ?"
 	case OP_LT:
-		return column + " < ?", nil
+		return column + " < ?"
 	case OP_GT:
-		return column + " > ?", nil
+		return column + " > ?"
 	case OP_NOTEQ:
-		return column + " <> ?", nil
+		return column + " <> ?"
 	case OP_LE:
-		return column + " <= ?", nil
+		return column + " <= ?"
 	case OP_GE:
-		return column + " >= ?", nil
+		return column + " >= ?"
 	default:
-		return "", errors.New("invalid operator:" + string(op) + " for " + column)
+		panic(errors.New("invalid operator:" + string(op) + " for " + column))
 	}
 }
 
-func (op ralationalOperator) buildMultipleExp(column string, paramName string) (string, error) {
-	var qtext = `strings.Join(querys, ",")`
+func (op ralationalOperator) buildMultipleExp(column string, paramName string) string {
 	switch op {
 	case OP_IN:
-		return column + " in (" + qtext + ")", nil
+		return `jormgen.AddIn("` + column + `", ` + paramName + `, queryParams)`
 	case OP_NOTIN:
-		return column + " not in (" + qtext + ")", nil
+		return `jormgen.AddNotIn("` + column + `", ` + paramName + `, queryParams)`
 	default:
-		return "", errors.New("invalid operator:" + string(op) + " for " + column)
+		panic("invalid operator:" + string(op) + " for " + column)
 	}
 }

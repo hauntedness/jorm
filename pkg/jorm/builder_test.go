@@ -1,8 +1,10 @@
 package jorm
 
 import (
+	"fmt"
 	"go/format"
 	"testing"
+	"time"
 )
 
 /*
@@ -21,7 +23,7 @@ return
 */
 
 func TestFunctionBodyBuild(t *testing.T) {
-	var functionBody = &FunctionBody{
+	functionBody := &FunctionBody{
 		VarQueryClause:  "var queryParams = make([]any, 0, len(names))",
 		VarSelectClause: `var selectClause = "SELECT id,name,author,version FROM book"`,
 		VarWhereClause:  `var whereClause = "where " + jormgen.AddArray("name", names, queryParams) + " and " + jormgen.AddArray("author", authors, queryParams)`,
@@ -44,4 +46,15 @@ func TestFunctionBodyBuild(t *testing.T) {
 		t.Error(err)
 	}
 	t.Log(string(b))
+}
+
+func TestXxx(t *testing.T) {
+	start := time.Now()
+	//dict := make(map[int]*string, 10000000)
+
+	for i := 0; i < 10000000; i++ {
+		//dict[i] = &s
+	}
+	duration := time.Since(start)
+	fmt.Println(duration)
 }

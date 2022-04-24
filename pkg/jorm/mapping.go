@@ -22,16 +22,17 @@ type Mapping struct {
 	Repository     *ast.InterfaceType    // repository interface to be parsed
 	PrimaryKeys    map[string]any        // the type of pk, can be int, float64, strign and so on... todo how about struct(??)
 	SelectClause   string                // generated select clause
-	CodeText       map[string]string     // generated where clauses based on repository
+	SqlText        map[string]string     // generated where clauses based on repository
 	TableName      string                // table name
 	EntityPath     string                // entity path, from import xxxx/xxx/xxx/xxx
 	RepositoryPath string                // repository path from import xxx/xx/xx/repostoryxxx
 	Status         MappingStatus         // enumerate mapping status
 	FieldMap       map[string]*ast.Field // key is field name, value is field
+	FuncMap        map[string]*FunctionStatement
 }
 
 func NewMapping() *Mapping {
-	return &Mapping{CodeText: make(map[string]string), FieldMap: make(map[string]*ast.Field)}
+	return &Mapping{SqlText: make(map[string]string), FieldMap: make(map[string]*ast.Field), FuncMap: make(map[string]*FunctionStatement)}
 }
 
 func (m *Mapping) OnEntityReady() {
@@ -61,20 +62,20 @@ func (m *Mapping) BuildSqlText() {
 		for _, method := range interfaceType.Methods.List {
 			methodName := method.Names[0].Name
 			if strings.HasPrefix(methodName, "Find") {
-				m.buildSelectCodeText(method)
+				m.buildSelectText(method)
 			} else if strings.HasPrefix(methodName, "Insert") {
-				m.buildInsertCodeText(method)
+				m.buildInsertText(method)
 			} else if strings.HasPrefix(methodName, "Update") {
-				m.buildUpdateCodeText(method)
+				m.buildUpdateText(method)
 			} else if strings.HasPrefix(methodName, "Delete") {
-				m.buildDeleteCodeText(method)
+				m.buildDeleteText(method)
 			}
 		}
 		fmt.Println(interfaceType)
 	}
 }
 
-func (m *Mapping) buildSelectCodeText(method *ast.Field) {
+func (m *Mapping) buildSelectText(method *ast.Field) {
 	var criteria = make([]string, 0)
 	// split function name into column list
 	funcName := method.Names[0].Name
@@ -88,38 +89,32 @@ func (m *Mapping) buildSelectCodeText(method *ast.Field) {
 	names := strings.Split(after, "And")
 	for i, name := range names {
 		field, op := m.ParseFieldNameAndOperator(name)
-		if field == nil {
-			return
-		}
-		// check for type match
-		if m.FieldMap[name].Type.(*ast.Ident).Name != params[i].Type.(*ast.Ident).Name {
-			return
-		}
+		name = field.Names[0].Name
+		//m.checkForTypeMatch(field, name, params[i])
 		var columnName string
 		var ok bool
 		if columnName, ok = ExtractTagValue(field, "jorm-column"); !ok {
 			columnName = m.FieldMap[name].Names[0].Name
 		}
-		exp, err := op.BuildElementExpression(columnName, m.FieldMap[name].Type, params[i].Names[0].Name, params[i].Type)
-		if err != nil {
-			panic(err)
-		}
+		exp := op.BuildElementExpression(columnName, m.FieldMap[name].Type, params[i].Names[0].Name, params[i].Type)
+
 		//TODO
 		criteria = append(criteria, exp)
 	}
 
-	m.CodeText[funcName] = m.SelectClause + " " + m.TableName + " where " + strings.Join(criteria, " and ")
-}
-
-func (m *Mapping) buildInsertCodeText(method *ast.Field) {
+	m.SqlText[funcName] = m.SelectClause + " from " + m.TableName + " where " + strings.Join(criteria, " and ")
 
 }
 
-func (m *Mapping) buildUpdateCodeText(method *ast.Field) {
+func (m *Mapping) buildInsertText(method *ast.Field) {
 
 }
 
-func (m *Mapping) buildDeleteCodeText(method *ast.Field) {
+func (m *Mapping) buildUpdateText(method *ast.Field) {
+
+}
+
+func (m *Mapping) buildDeleteText(method *ast.Field) {
 
 }
 
@@ -146,6 +141,5 @@ func (m *Mapping) ParseFieldNameAndOperator(section string) (field *ast.Field, o
 			return field, op
 		}
 	}
-	// find field name prior to
-	return nil, NewRalationalOperator("")
+	panic("can't parse this section:" + section)
 }
