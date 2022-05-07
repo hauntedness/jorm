@@ -164,6 +164,7 @@ func NewFuncName(name string) *FuncName {
 	}
 }
 
+//TODO add parameters consider slice
 func (fn *FuncName) Build() string {
 	var fields = make([]string, 0, len(fn.Fields))
 	for _, field := range fn.Fields {

@@ -114,7 +114,7 @@ func (o *ORM) onInterfaceType(genDocList, tsDocList []*ast.Comment, typeSpec *as
 	var key string
 	// get doc to see if it is jorm repostiroy
 	for _, comment := range genDocList {
-		_, ok := extract(comment.Text, "jorm-repository")
+		_, ok := extract(comment.Text, JORM_REPOSITORY)
 		if !ok {
 			return
 		}
@@ -152,17 +152,17 @@ func (o *ORM) onStructType(genDocList, tsDocList []*ast.Comment, typeSpec *ast.T
 	jormEntity := ""
 	jormTable := ""
 	for _, v := range genDocList {
-		if strings.Contains(v.Text, "jorm-entity") {
+		if strings.Contains(v.Text, JORM_ENTITY) {
 			jormEntity = v.Text
-		} else if strings.Contains(v.Text, "jorm-table") {
+		} else if strings.Contains(v.Text, JORM_TABLE) {
 			jormTable = v.Text
 		}
 	}
 
 	for _, v := range tsDocList {
-		if strings.Contains(v.Text, "jorm-entity") {
+		if strings.Contains(v.Text, JORM_ENTITY) {
 			jormEntity = v.Text
-		} else if strings.Contains(v.Text, "jorm-table") {
+		} else if strings.Contains(v.Text, JORM_TABLE) {
 			jormTable = v.Text
 		}
 	}
@@ -173,7 +173,7 @@ func (o *ORM) onStructType(genDocList, tsDocList []*ast.Comment, typeSpec *ast.T
 	if _, ok := o.MappingStore[key]; !ok {
 		o.MappingStore[key] = NewMapping()
 	}
-	if value, ok := extract(jormTable, "jorm-table"); ok {
+	if value, ok := extract(jormTable, JORM_TABLE); ok {
 		o.MappingStore[key].TableName = value
 	}
 	o.MappingStore[key].Entity = typeSpec
