@@ -7,7 +7,7 @@ import (
 )
 
 type Builder interface {
-	build() string
+	Build() string
 }
 
 /*

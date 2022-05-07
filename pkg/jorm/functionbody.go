@@ -50,3 +50,14 @@ func NewFunctionBody() *FunctionBody {
 		StmtReturn:      "return",
 	}
 }
+
+//	var whereClause = jormgen.AddArray("name", names, queryParams) + " and " + jormgen.AddArray("author", authors, queryParams)
+
+type WhereClause struct {
+}
+
+var _ Builder = (*WhereClause)(nil)
+
+func (w *WhereClause) Build() string {
+	return ""
+}
