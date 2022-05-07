@@ -178,25 +178,33 @@ func (fn *FuncName) Build() string {
 }
 
 type FuncReturn struct {
-	LBrace string
-	Fields []Field
-	RBrace string
+	singleResult bool
+	LBrace       string
+	Fields       []Field
+	RBrace       string
 }
 
 func NewFuncReturn(field *ast.Field, entity *ast.TypeSpec, pkg string) *FuncReturn {
+	var singleResult = true
 	var fields = make([]Field, 2)
 	switch field.Type.(type) {
 	case *ast.ArrayType:
+		singleResult = false
 		fields[0] = NewField(CaseTitleToCamal(entity.Name.Name)+"List", "[]"+pkg+`.`+entity.Name.Name)
 	case *ast.Ident:
 		fields[0] = NewField(CaseTitleToCamal(entity.Name.Name), pkg+`.`+entity.Name.Name)
 	}
 	fields[1] = NewField("err", "error")
 	return &FuncReturn{
-		LBrace: "(",
-		Fields: fields,
-		RBrace: ")",
+		singleResult: singleResult,
+		LBrace:       "(",
+		Fields:       fields,
+		RBrace:       ")",
 	}
+}
+
+func (fr *FuncReturn) SingleResult() bool {
+	return fr.singleResult
 }
 
 func (fr *FuncReturn) Build() string {
