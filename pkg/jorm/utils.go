@@ -56,7 +56,7 @@ func CaseTitleToSnake(text string) string {
 
 // Id -> id
 // BookName -> bookName
-func CaseTitleToCamal(text string) string {
+func CaseTitleToCamel(text string) string {
 	runes := []rune(text)
 	length := len(runes)
 	if length == 0 {
