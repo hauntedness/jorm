@@ -190,9 +190,9 @@ func NewFuncReturn(field *ast.Field, entity *ast.TypeSpec, pkg string) *FuncRetu
 	switch field.Type.(type) {
 	case *ast.ArrayType:
 		singleResult = false
-		fields[0] = NewField(CaseTitleToCamal(entity.Name.Name)+"List", "[]"+pkg+`.`+entity.Name.Name)
+		fields[0] = NewField(CaseTitleToCamel(entity.Name.Name)+"List", "[]"+pkg+`.`+entity.Name.Name)
 	case *ast.Ident:
-		fields[0] = NewField(CaseTitleToCamal(entity.Name.Name), pkg+`.`+entity.Name.Name)
+		fields[0] = NewField(CaseTitleToCamel(entity.Name.Name), pkg+`.`+entity.Name.Name)
 	}
 	fields[1] = NewField("err", "error")
 	return &FuncReturn{

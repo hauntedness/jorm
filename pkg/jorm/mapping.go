@@ -157,7 +157,7 @@ func (m *Mapping) BuildFuncStmt(method *ast.Field, criteria []string) {
 	// so the stmt should be var whereClause = "id = ? and " + jormgen.AddNotIn("author", authors, queryParams)
 	body.VarWhereClause = `var whereClause = ` + strings.Join(criteria, ` + " and " + `)
 	//TODO here to find the package
-	var book = CaseTitleToCamal(m.Entity.Name.Name)
+	var book = CaseTitleToCamel(m.Entity.Name.Name)
 	body.ForVarEntity = `var ` + book + " " + pkg + `.` + m.Entity.Name.Name
 	body.ForStmtScan = ""
 	// TODO here the return type depend on sql result
