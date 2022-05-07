@@ -98,52 +98,20 @@ func (op ralationalOperator) BuildElementExpression(columnName string, elemType 
 	}
 }
 
-/**
-
-func (b *bookRepository) FindByNameIn(names []string) (books []entity.Book, err error) {
-	var querys = make([]string, 0, len(names))
-	var params = make([]any, 0, len(names))
-	for _, name := range names {
-		querys = append(querys, "?")
-		params = append(params, name)
-	}
-	var selectClause = "SELECT id,name,author,version FROM book"
-	var whereClause = "where"
-	var qtext = "id in (" + strings.Join(querys, ",") + ")"
-	var exp = selectClause + " " + whereClause + " " + qtext
-	rows, err := db.Query(exp, params...)
-	for rows.Next() {
-		var book entity.Book
-		rows.Scan(&book.Id, &book.Name, &book.Author, &book.Version)
-		books = append(books, book)
-	}
-	return
-}
-*/
-func (op ralationalOperator) Build() []any {
-	var clause []any
-	// literal A = ?
-	clause = append(clause, "A = ?")
-	// list
-	var list []any
-	clause = append(clause, list...)
-	return clause
-}
-
 func (op ralationalOperator) buildSingleValueExp(column string) string {
 	switch op {
 	case OP_EQ:
-		return column + " = ?"
+		return `"` + column + " = ?" + `"`
 	case OP_LT:
-		return column + " < ?"
+		return `"` + column + " < ?" + `"`
 	case OP_GT:
-		return column + " > ?"
+		return `"` + column + " > ?" + `"`
 	case OP_NOTEQ:
-		return column + " <> ?"
+		return `"` + column + " <> ?" + `"`
 	case OP_LE:
-		return column + " <= ?"
+		return `"` + column + " <= ?" + `"`
 	case OP_GE:
-		return column + " >= ?"
+		return `"` + column + " >= ?" + `"`
 	default:
 		panic(errors.New("invalid operator:" + string(op) + " for " + column))
 	}

@@ -155,7 +155,7 @@ func (m *Mapping) BuildFuncStmt(method *ast.Field, criteria []string) {
 	// TODO bug, here is 2 cases
 	// id = ? and book in (?,?,?)
 	// so the stmt should be var whereClause = "id = ? and " + jormgen.AddNotIn("author", authors, queryParams)
-	body.VarWhereClause = `var whereClause = "` + strings.Join(criteria, " and ") + `"`
+	body.VarWhereClause = `var whereClause = ` + strings.Join(criteria, ` + " and " + `)
 	//TODO here to find the package
 	var book = CaseTitleToCamal(m.Entity.Name.Name)
 	body.ForVarEntity = `var ` + book + " " + pkg + `.` + m.Entity.Name.Name
